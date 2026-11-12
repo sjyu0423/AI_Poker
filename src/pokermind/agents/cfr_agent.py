@@ -19,6 +19,35 @@ from pokermind.strategy import Strategy, load_strategy
 _ATOL = 1e-9
 
 
+def sample_action(
+    legal_actions: tuple[Action, ...],
+    probs: list[float],
+    rng: np.random.Generator,
+    context: str = "",
+) -> Action:
+    """Sample one legal action; ``probs[i]`` is the probability of ``legal_actions[i]``.
+
+    Uses exactly one uniform draw per decision, inverted through the CDF in
+    the engine's legal-action order, so any two agents that produce the same
+    probabilities make the same choices under the same generator.
+    """
+    if (
+        len(probs) != len(legal_actions)
+        or any(not math.isfinite(p) or p < -_ATOL for p in probs)
+        or abs(sum(probs) - 1) > _ATOL
+    ):
+        raise ValueError(f"invalid probabilities at {context!r}: {probs}")
+    u = float(rng.random())
+    cumulative = 0.0
+    for action, p in zip(legal_actions, probs, strict=True):
+        cumulative += p
+        if u < cumulative:
+            return action
+    # Rounding can leave the CDF a hair below 1; fall back to the last
+    # action that has positive probability.
+    return next(a for a, p in zip(reversed(legal_actions), reversed(probs), strict=True) if p > 0)
+
+
 class StrategyAgent:
     """Samples actions from a tabular strategy."""
 
@@ -54,21 +83,7 @@ class StrategyAgent:
                 f"strategy actions at {key!r} {sorted(a.code for a in dist)} do not match "
                 f"legal actions {sorted(a.code for a in legal_actions)}"
             )
-        probs = [dist[a] for a in legal_actions]  # engine order: passive first
-        if any(not math.isfinite(p) or p < -_ATOL for p in probs) or abs(sum(probs) - 1) > _ATOL:
-            raise ValueError(f"invalid probabilities at {key!r}: {probs}")
-        # One uniform draw per decision, inverted through the CDF.
-        u = float(rng.random())
-        cumulative = 0.0
-        for action, p in zip(legal_actions, probs, strict=True):
-            cumulative += p
-            if u < cumulative:
-                return action
-        # Rounding can leave the CDF a hair below 1; fall back to the last
-        # action that has positive probability.
-        return next(
-            a for a, p in zip(reversed(legal_actions), reversed(probs), strict=True) if p > 0
-        )
+        return sample_action(legal_actions, [dist[a] for a in legal_actions], rng, key)
 
 
 CFRAgent = StrategyAgent

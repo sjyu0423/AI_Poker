@@ -6,8 +6,8 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M1, vanilla CFR with exact evaluation on Kuhn Poker** (M0: the Kuhn
-Poker engine and research foundation).
+**Status: M2A, tiny neural policies distilled from the verified CFR strategy**
+(M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker engine).
 
 ## Layout
 
@@ -19,7 +19,8 @@ src/pokermind/
   learning/cfr.py        vanilla CFR (simultaneous updates, full traversal)
   evaluation/exact.py    exact EV, best response, NashConv, exploitability
   evaluation/reference.py known Kuhn equilibrium family, game value -1/18
-  experiments/           CFR experiment runner, metrics and plots
+  neural/                M2A: encoding, teacher dataset, masked MLP, training, agent
+  experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
   cli.py                 `pokermind` command
@@ -27,11 +28,13 @@ tests/                   rules, payoffs, leakage, agents, simulation, CLI,
                          CFR, evaluation oracle, OpenSpiel cross-check (optional)
 docs/kuhn_poker.md       rules and state representation
 docs/concepts/cfr.md     CFR, best response and exploitability, worked example
+docs/concepts/neural_policy.md  layers, backprop, Adam, softmax, KL, distillation
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
 Dependency direction: `games` ← `strategy` ← {`agents`, `learning`,
-`evaluation`} ← `simulation` ← `experiments` ← `cli`. Games know nothing about
+`evaluation`} ← `neural` ← `simulation` ← `experiments` ← `cli`. Only `neural`
+and its experiment import PyTorch, lazily from the CLI. Games know nothing about
 agents or learning. Agents only see `InfoState`. The evaluator never imports
 the learning code, so it is an independent check on CFR.
 
@@ -60,6 +63,19 @@ pokermind simulate --agents cfr rule --strategy runs/m1-cfr/strategies/strategy_
 strategy file per checkpoint into the output directory. `runs/` is
 git-ignored. Exploitability is NashConv / 2 in chips per hand; the
 conventions are documented in `docs/concepts/cfr.md`.
+
+M2A: distill the CFR strategy into tiny networks (PyTorch) and evaluate them exactly:
+
+```bash
+pokermind train-neural --output-dir runs/m2a-neural
+pokermind simulate --agents neural rule --model runs/m2a-neural/models/mlp16_lr0.01_seed2.pt
+```
+
+`train-neural` trains linear, 16 and 16×16 policies over several learning rates
+and seeds, then reports imitation error, exact exploitability, payoffs, model
+size and latency against the 12-entry table (`docs/concepts/neural_policy.md`).
+Kuhn Poker has only 12 information sets, so these runs measure
+representation, not generalization.
 
 Optional cross-check against OpenSpiel (not a project dependency):
 

@@ -12,8 +12,9 @@ dependencies = ["numpy>=1.26"]
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.8"]
+neural = ["torch>=2.4"]
 crosscheck = ["open_spiel>=1.5"]  # optional OpenSpiel oracle, see tests/test_openspiel_crosscheck.py
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "matplotlib>=3.8"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "matplotlib>=3.8", "torch>=2.4"]
 
 [project.scripts]
 pokermind = "pokermind.cli:main"

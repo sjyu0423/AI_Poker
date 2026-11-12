@@ -30,6 +30,7 @@ from pokermind.simulation import (
 from pokermind.strategy import StrategyFormatError
 
 STRATEGY_AGENT = "cfr"
+NEURAL_AGENT = "neural"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -42,8 +43,9 @@ def _build_parser() -> argparse.ArgumentParser:
         nargs=2,
         metavar=("AGENT0", "AGENT1"),
         default=["random", "rule"],
-        choices=sorted([*AGENT_REGISTRY, STRATEGY_AGENT]),
-        help="two registered agent names (default: random rule); 'cfr' needs --strategy",
+        choices=sorted([*AGENT_REGISTRY, STRATEGY_AGENT, NEURAL_AGENT]),
+        help="two registered agent names (default: random rule); "
+        "'cfr' needs --strategy, 'neural' needs --model",
     )
     sim.add_argument("--hands", type=int, default=10_000, help="number of hands")
     sim.add_argument("--seed", type=int, default=0, help="non-negative integer seed")
@@ -58,6 +60,25 @@ def _build_parser() -> argparse.ArgumentParser:
     sim.add_argument("--output", type=Path, help="write full JSON results to this path")
     sim.add_argument("--json", action="store_true", help="print JSON instead of a summary")
     sim.add_argument("--strategy", type=Path, help="strategy file played by any agent named 'cfr'")
+
+    sim.add_argument(
+        "--model", type=Path, help="neural checkpoint played by any agent named 'neural'"
+    )
+
+    neural = sub.add_parser(
+        "train-neural", help="distill the CFR strategy into tiny neural policies (PyTorch)"
+    )
+    neural.add_argument("--epochs", type=int, default=3_000)
+    neural.add_argument("--learning-rates", type=float, nargs="+", default=[0.01, 0.03])
+    neural.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
+    neural.add_argument("--architectures", nargs="+", default=["linear", "mlp16", "mlp16x16"])
+    neural.add_argument(
+        "--teacher", type=Path, help="teacher strategy file (default: re-run M1 CFR)"
+    )
+    neural.add_argument("--teacher-iterations", type=int, default=50_000)
+    neural.add_argument("--simulation-hands", type=int, default=50_000)
+    neural.add_argument("--no-benchmark", action="store_true", help="skip latency benchmarks")
+    neural.add_argument("--output-dir", type=Path, default=Path("runs/m2a-neural"))
 
     train = sub.add_parser("train-cfr", help="train vanilla CFR with exact evaluation")
     train.add_argument(
@@ -119,7 +140,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         for name in sorted(AGENT_REGISTRY):
             print(f"{name:<14}{make_agent(name).name}")
         print(f"{STRATEGY_AGENT:<14}tabular strategy from --strategy FILE (e.g. a CFR export)")
+        print(f"{NEURAL_AGENT:<14}neural policy from --model FILE (needs PyTorch)")
         return 0
+    if args.command == "train-neural":
+        return _train_neural(args)
     if args.command == "train-cfr":
         return _train_cfr(args)
 
@@ -138,7 +162,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         agents = (_build_agent(args.agents[0], args), _build_agent(args.agents[1], args))
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     result = run_simulation(agents, config)
@@ -154,6 +178,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "alternate_seats": config.alternate_seats,
             "strict": config.strict,
             "strategy": None if args.strategy is None else str(args.strategy),
+            "model": None if args.model is None else str(args.model),
         },
         "result": result.to_dict(),
         "metadata": collect_metadata(["pokermind", *(argv if argv is not None else sys.argv[1:])]),
@@ -166,6 +191,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _build_agent(name: str, args: argparse.Namespace) -> Agent:
+    if name == NEURAL_AGENT:
+        if args.model is None:
+            raise ValueError("agent 'neural' requires --model FILE")
+        if (args.ante, args.bet_size) != (1, 1):
+            raise ValueError("neural policies are trained for ante 1, bet 1 only")
+        from pokermind.neural import NeuralPolicyAgent
+
+        return NeuralPolicyAgent.from_checkpoint(args.model)
     if name != STRATEGY_AGENT:
         return make_agent(name)
     if args.strategy is None:
@@ -178,6 +211,45 @@ def _build_agent(name: str, args: argparse.Namespace) -> Agent:
     except ValueError as exc:
         raise StrategyFormatError(f"{args.strategy}: {exc}") from None
     return agent
+
+
+def _train_neural(args: argparse.Namespace) -> int:
+    from pokermind.experiments.neural_experiment import (
+        NeuralExperimentConfig,
+        run_neural_experiment,
+    )
+
+    try:
+        config = NeuralExperimentConfig(
+            architectures=tuple(args.architectures),
+            learning_rates=tuple(args.learning_rates),
+            seeds=tuple(args.seeds),
+            epochs=args.epochs,
+            teacher_iterations=args.teacher_iterations,
+            teacher_path=None if args.teacher is None else str(args.teacher),
+            simulation_hands=args.simulation_hands,
+            benchmark=not args.no_benchmark,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_neural_experiment(config, args.output_dir)
+    t = doc["teacher"]
+    print(f"teacher {t['digest'][:12]}: exploitability {t['exploitability']:.6f}")
+    print(
+        f"{'run':<24}{'params':>7}{'max err':>10}{'mean err':>10}{'mean KL':>11}"
+        f"{'exploit.':>11}{'train s':>8}"
+    )
+    for r in doc["runs"]:
+        print(
+            f"{r['run_id']:<24}{r['parameter_count']:>7}{r['max_abs_error']:>10.5f}"
+            f"{r['mean_abs_error']:>10.5f}{r['mean_kl']:>11.2e}{r['exploitability']:>11.6f}"
+            f"{r['train_seconds']:>8.2f}"
+        )
+    for arch, sel in doc["selected"].items():
+        print(f"selected {arch}: {sel['run_id']}")
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    return 0
 
 
 def _train_cfr(args: argparse.Namespace) -> int:

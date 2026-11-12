@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from pokermind.agents.base import Agent
+from pokermind.agents.cfr_agent import CFRAgent, StrategyAgent
 from pokermind.agents.random_agent import RandomAgent
 from pokermind.agents.rule_based import AlwaysBetAgent, AlwaysPassAgent, ThresholdAgent
 
@@ -28,7 +29,9 @@ __all__ = [
     "Agent",
     "AlwaysBetAgent",
     "AlwaysPassAgent",
+    "CFRAgent",
     "RandomAgent",
+    "StrategyAgent",
     "ThresholdAgent",
     "make_agent",
 ]

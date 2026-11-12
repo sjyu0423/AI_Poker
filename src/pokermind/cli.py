@@ -5,6 +5,8 @@ Examples::
     pokermind simulate --agents random rule --hands 100000 --seed 42
     pokermind simulate --agents rule always-bet --hands 1000 --seed 7 --output run.json
     pokermind agents
+    pokermind train-cfr --checkpoints 100 1000 10000 --output-dir runs/cfr
+    pokermind simulate --agents cfr random --strategy runs/cfr/strategies/strategy_010000.json
 """
 
 from __future__ import annotations
@@ -16,6 +18,8 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from pokermind.agents import AGENT_REGISTRY, make_agent
+from pokermind.agents.base import Agent
+from pokermind.agents.cfr_agent import StrategyAgent
 from pokermind.games.kuhn import KuhnConfig
 from pokermind.simulation import (
     SimulationConfig,
@@ -23,6 +27,9 @@ from pokermind.simulation import (
     collect_metadata,
     run_simulation,
 )
+from pokermind.strategy import StrategyFormatError
+
+STRATEGY_AGENT = "cfr"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -35,8 +42,8 @@ def _build_parser() -> argparse.ArgumentParser:
         nargs=2,
         metavar=("AGENT0", "AGENT1"),
         default=["random", "rule"],
-        choices=sorted(AGENT_REGISTRY),
-        help="two registered agent names (default: random rule)",
+        choices=sorted([*AGENT_REGISTRY, STRATEGY_AGENT]),
+        help="two registered agent names (default: random rule); 'cfr' needs --strategy",
     )
     sim.add_argument("--hands", type=int, default=10_000, help="number of hands")
     sim.add_argument("--seed", type=int, default=0, help="non-negative integer seed")
@@ -50,6 +57,25 @@ def _build_parser() -> argparse.ArgumentParser:
     sim.add_argument("--strict", action="store_true", help="raise on invalid agent actions")
     sim.add_argument("--output", type=Path, help="write full JSON results to this path")
     sim.add_argument("--json", action="store_true", help="print JSON instead of a summary")
+    sim.add_argument("--strategy", type=Path, help="strategy file played by any agent named 'cfr'")
+
+    train = sub.add_parser("train-cfr", help="train vanilla CFR with exact evaluation")
+    train.add_argument(
+        "--checkpoints",
+        type=int,
+        nargs="+",
+        default=None,
+        help="increasing iteration counts to evaluate and export "
+        "(default: 1 10 100 500 1000 5000 10000 50000)",
+    )
+    train.add_argument("--seed", type=int, default=0, help="seed for the simulation check")
+    train.add_argument(
+        "--simulation-hands",
+        type=int,
+        default=100_000,
+        help="hands per simulated match of the final strategy (0 to skip)",
+    )
+    train.add_argument("--output-dir", type=Path, default=Path("runs/cfr"))
 
     sub.add_parser("agents", help="list registered agents")
     return parser
@@ -92,7 +118,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "agents":
         for name in sorted(AGENT_REGISTRY):
             print(f"{name:<14}{make_agent(name).name}")
+        print(f"{STRATEGY_AGENT:<14}tabular strategy from --strategy FILE (e.g. a CFR export)")
         return 0
+    if args.command == "train-cfr":
+        return _train_cfr(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -107,7 +136,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
-    agents = (make_agent(args.agents[0]), make_agent(args.agents[1]))
+    try:
+        agents = (_build_agent(args.agents[0], args), _build_agent(args.agents[1], args))
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     result = run_simulation(agents, config)
 
     report = {
@@ -120,6 +153,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "bet_size": game.bet_size,
             "alternate_seats": config.alternate_seats,
             "strict": config.strict,
+            "strategy": None if args.strategy is None else str(args.strategy),
         },
         "result": result.to_dict(),
         "metadata": collect_metadata(["pokermind", *(argv if argv is not None else sys.argv[1:])]),
@@ -128,6 +162,52 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2) if args.json else format_summary(result))
+    return 0
+
+
+def _build_agent(name: str, args: argparse.Namespace) -> Agent:
+    if name != STRATEGY_AGENT:
+        return make_agent(name)
+    if args.strategy is None:
+        raise ValueError("agent 'cfr' requires --strategy FILE")
+    from pokermind.evaluation import validate_strategy
+
+    agent = StrategyAgent.from_file(args.strategy)
+    try:
+        validate_strategy(agent.strategy, (0, 1), config=KuhnConfig(args.ante, args.bet_size))
+    except ValueError as exc:
+        raise StrategyFormatError(f"{args.strategy}: {exc}") from None
+    return agent
+
+
+def _train_cfr(args: argparse.Namespace) -> int:
+    from pokermind.experiments import DEFAULT_CHECKPOINTS, CFRExperimentConfig, run_cfr_experiment
+
+    try:
+        config = CFRExperimentConfig(
+            checkpoints=tuple(args.checkpoints) if args.checkpoints else DEFAULT_CHECKPOINTS,
+            seed=args.seed,
+            simulation_hands=args.simulation_hands,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_cfr_experiment(config, args.output_dir)
+    print(f"vanilla CFR on Kuhn Poker -> {args.output_dir}")
+    print(
+        f"{'iteration':>10}{'exploitability':>16}{'NashConv':>12}{'seat0 value':>13}{'train s':>9}"
+    )
+    for cp in doc["checkpoints"]:
+        print(
+            f"{cp['iteration']:>10,}{cp['exploitability']:>16.6f}{cp['nash_conv']:>12.6f}"
+            f"{cp['self_play_value_seat0']:>+13.6f}{cp['train_seconds_cumulative']:>9.2f}"
+        )
+    for sim in doc["simulation_check"]:
+        print(
+            f"simulated vs {sim['opponent']}: {sim['simulated_mean']:+.4f} ± {sim['std_error']:.4f}"
+            f" (exact {sim['exact_expected']:+.4f}, z={sim['z_score']:+.2f})"
+        )
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
     return 0
 
 

@@ -1,0 +1,328 @@
+{
+  "source": "runs/m2a-neural/metrics.json produced by `pokermind train-neural --output-dir runs/m2a-neural` at commit 93c6587 (M2A)",
+  "note": "Frozen copy of the M2A results for comparison in M2B. Latency numbers use the M2A methodology (lambda calls, median of 7 x 2000, 1 thread).",
+  "metadata": {
+    "python_version": "3.12.16",
+    "numpy_version": "2.5.4",
+    "torch_version": "2.15.0",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "machine": "arm64"
+  },
+  "teacher": {
+    "digest": "b8217a0c74657df799530f51315c1f8fa3d4c299a07f196af8474e65ffc0becc",
+    "iterations": 50000,
+    "exploitability": 0.0009988288043084083,
+    "table_bytes_float64": 192,
+    "table_file_bytes": 1263
+  },
+  "runs": [
+    {
+      "run_id": "linear_lr0.01_seed0",
+      "architecture": "linear",
+      "learning_rate": 0.01,
+      "seed": 0,
+      "epochs": 3000,
+      "parameter_count": 32,
+      "checkpoint_bytes": 2405,
+      "max_abs_error": 0.08083668830192973,
+      "mean_abs_error": 0.027292244024113056,
+      "mean_kl": 0.011790555233324394,
+      "exploitability": 0.03280558556783816,
+      "weights_digest": "ec7dca70a9a1948b8a66ca372b8bc5c2da33c6388e4518f762cb2a80b5ed1809"
+    },
+    {
+      "run_id": "linear_lr0.01_seed1",
+      "architecture": "linear",
+      "learning_rate": 0.01,
+      "seed": 1,
+      "epochs": 3000,
+      "parameter_count": 32,
+      "checkpoint_bytes": 2405,
+      "max_abs_error": 0.08090392324123998,
+      "mean_abs_error": 0.02735777662103615,
+      "mean_kl": 0.011846752199110322,
+      "exploitability": 0.03284054617868737,
+      "weights_digest": "cee7c7026ffe745564554f40642eea6acdff94451af8602a507f4ec95b1894bd"
+    },
+    {
+      "run_id": "linear_lr0.01_seed2",
+      "architecture": "linear",
+      "learning_rate": 0.01,
+      "seed": 2,
+      "epochs": 3000,
+      "parameter_count": 32,
+      "checkpoint_bytes": 2405,
+      "max_abs_error": 0.08102405730822493,
+      "mean_abs_error": 0.027360945460661937,
+      "mean_kl": 0.011853331477678726,
+      "exploitability": 0.03284524266887032,
+      "weights_digest": "50dab01cf1e2fc48eca63708f4f4f94c21a0c353d1f957a8663dc28d7f1b3c3d"
+    },
+    {
+      "run_id": "linear_lr0.03_seed0",
+      "architecture": "linear",
+      "learning_rate": 0.03,
+      "seed": 0,
+      "epochs": 3000,
+      "parameter_count": 32,
+      "checkpoint_bytes": 2405,
+      "max_abs_error": 0.08065954492696559,
+      "mean_abs_error": 0.026951470794443724,
+      "mean_kl": 0.01153283166247844,
+      "exploitability": 0.032620142627322185,
+      "weights_digest": "906767410ab6005d5fdbf40db688dc76c224b25fc96f00aeb6ce12dacd3002dc"
+    },
+    {
+      "run_id": "linear_lr0.03_seed1",
+      "architecture": "linear",
+      "learning_rate": 0.03,
+      "seed": 1,
+      "epochs": 3000,
+      "parameter_count": 32,
+      "checkpoint_bytes": 2405,
+      "max_abs_error": 0.08067385049139132,
+      "mean_abs_error": 0.026960906968773058,
+      "mean_kl": 0.011540369790551598,
+      "exploitability": 0.03262583919704002,
+      "weights_digest": "bca020f5b405e04261a8fd286b628b09d51a2804b57674a0ed86449bde83c001"
+    },
+    {
+      "run_id": "linear_lr0.03_seed2",
+      "architecture": "linear",
+      "learning_rate": 0.03,
+      "seed": 2,
+      "epochs": 3000,
+      "parameter_count": 32,
+      "checkpoint_bytes": 2405,
+      "max_abs_error": 0.08068404616543645,
+      "mean_abs_error": 0.02696304405518651,
+      "mean_kl": 0.011542043455425977,
+      "exploitability": 0.0326273327542169,
+      "weights_digest": "9b18da854d1d1823a8dfa5ea07db5cfa8271284eba329ea1ec41a9bb05303f33"
+    },
+    {
+      "run_id": "mlp16_lr0.01_seed0",
+      "architecture": "mlp16",
+      "learning_rate": 0.01,
+      "seed": 0,
+      "epochs": 3000,
+      "parameter_count": 196,
+      "checkpoint_bytes": 3421,
+      "max_abs_error": 0.008125893282010743,
+      "mean_abs_error": 0.0020361199591204414,
+      "mean_kl": 2.842117803013441e-05,
+      "exploitability": 0.001578537374533017,
+      "weights_digest": "23c688932a1a940f77963e0c8bb621cc3b674ead8dfc027e148bbd71b9ea617a"
+    },
+    {
+      "run_id": "mlp16_lr0.01_seed1",
+      "architecture": "mlp16",
+      "learning_rate": 0.01,
+      "seed": 1,
+      "epochs": 3000,
+      "parameter_count": 196,
+      "checkpoint_bytes": 3421,
+      "max_abs_error": 2.838936359784369e-05,
+      "mean_abs_error": 9.223139337891519e-06,
+      "mean_kl": 1.8155629851876831e-06,
+      "exploitability": 0.0009998386668408667,
+      "weights_digest": "8f9ffc85810b6f34af4fe46012438ee6a3f4d3ce0fc8fb607fa0454082761c6b"
+    },
+    {
+      "run_id": "mlp16_lr0.01_seed2",
+      "architecture": "mlp16",
+      "learning_rate": 0.01,
+      "seed": 2,
+      "epochs": 3000,
+      "parameter_count": 196,
+      "checkpoint_bytes": 3421,
+      "max_abs_error": 1.581049152288294e-05,
+      "mean_abs_error": 7.462617916324784e-06,
+      "mean_kl": 8.771689726196889e-07,
+      "exploitability": 0.0009992155291427725,
+      "weights_digest": "ab155d0c8ae81147f4371ebc789a6e03835a82506ce39f25703ac04296755dfc"
+    },
+    {
+      "run_id": "mlp16_lr0.03_seed0",
+      "architecture": "mlp16",
+      "learning_rate": 0.03,
+      "seed": 0,
+      "epochs": 3000,
+      "parameter_count": 196,
+      "checkpoint_bytes": 3421,
+      "max_abs_error": 0.001114048195994477,
+      "mean_abs_error": 0.00020622251088377866,
+      "mean_kl": 1.550941677553868e-06,
+      "exploitability": 0.0010876030038552004,
+      "weights_digest": "2327f6843daadb70c25d9bf692961a81ea2cca84e4cdb476f55bb71356343ce0"
+    },
+    {
+      "run_id": "mlp16_lr0.03_seed1",
+      "architecture": "mlp16",
+      "learning_rate": 0.03,
+      "seed": 1,
+      "epochs": 3000,
+      "parameter_count": 196,
+      "checkpoint_bytes": 3421,
+      "max_abs_error": 0.004443369067476555,
+      "mean_abs_error": 0.0014610821834377078,
+      "mean_kl": 1.276869277601707e-05,
+      "exploitability": 0.0010626958910806353,
+      "weights_digest": "241ba85607038e048da027243d3e2cb10b2abd995ec6b96cbc04802bb6f89585"
+    },
+    {
+      "run_id": "mlp16_lr0.03_seed2",
+      "architecture": "mlp16",
+      "learning_rate": 0.03,
+      "seed": 2,
+      "epochs": 3000,
+      "parameter_count": 196,
+      "checkpoint_bytes": 3421,
+      "max_abs_error": 0.0003451351518600765,
+      "mean_abs_error": 0.00011629186635874432,
+      "mean_kl": 1.417629631085802e-06,
+      "exploitability": 0.0009489189818629729,
+      "weights_digest": "8bbfe2da9eb746787cc381fbe13209986cae60a87be7d6893682208371bd754f"
+    },
+    {
+      "run_id": "mlp16x16_lr0.01_seed0",
+      "architecture": "mlp16x16",
+      "learning_rate": 0.01,
+      "seed": 0,
+      "epochs": 3000,
+      "parameter_count": 468,
+      "checkpoint_bytes": 4949,
+      "max_abs_error": 5.822102658664674e-05,
+      "mean_abs_error": 1.3053562082276031e-05,
+      "mean_kl": 5.678801290452356e-07,
+      "exploitability": 0.0009976556595360023,
+      "weights_digest": "4ee61002549d349a816991ba91cbcfc960bdc73cf8a49272d4d0688ab8bf722c"
+    },
+    {
+      "run_id": "mlp16x16_lr0.01_seed1",
+      "architecture": "mlp16x16",
+      "learning_rate": 0.01,
+      "seed": 1,
+      "epochs": 3000,
+      "parameter_count": 468,
+      "checkpoint_bytes": 4949,
+      "max_abs_error": 2.2919689223910117e-05,
+      "mean_abs_error": 7.578197186464623e-06,
+      "mean_kl": 1.6379756482918175e-06,
+      "exploitability": 0.0009982796446110567,
+      "weights_digest": "b05d1b1d180f6727af3c8842d19489b2889994785542e28cf9af179c8241a6aa"
+    },
+    {
+      "run_id": "mlp16x16_lr0.01_seed2",
+      "architecture": "mlp16x16",
+      "learning_rate": 0.01,
+      "seed": 2,
+      "epochs": 3000,
+      "parameter_count": 468,
+      "checkpoint_bytes": 4949,
+      "max_abs_error": 0.00018756096099098452,
+      "mean_abs_error": 3.919574591569099e-05,
+      "mean_kl": 8.520703731674082e-07,
+      "exploitability": 0.0010202911539839293,
+      "weights_digest": "3517aa3b4fad7e25bd247d682064dcdd7a363d157b12480a04fc593f1549a2e9"
+    },
+    {
+      "run_id": "mlp16x16_lr0.03_seed0",
+      "architecture": "mlp16x16",
+      "learning_rate": 0.03,
+      "seed": 0,
+      "epochs": 3000,
+      "parameter_count": 468,
+      "checkpoint_bytes": 4949,
+      "max_abs_error": 0.044126826699996013,
+      "mean_abs_error": 0.010634174178285818,
+      "mean_kl": 0.0007657703797097908,
+      "exploitability": 0.011264680044515168,
+      "weights_digest": "04568299c10f317785a55337ca42224753404ca2896266ec78d709ad947d5bee"
+    },
+    {
+      "run_id": "mlp16x16_lr0.03_seed1",
+      "architecture": "mlp16x16",
+      "learning_rate": 0.03,
+      "seed": 1,
+      "epochs": 3000,
+      "parameter_count": 468,
+      "checkpoint_bytes": 4949,
+      "max_abs_error": 0.0010000348008496474,
+      "mean_abs_error": 0.0002571764741775778,
+      "mean_kl": 2.290160734498213e-06,
+      "exploitability": 0.00111391421219674,
+      "weights_digest": "637a710cca1e995ad4cf6a8010b526ac45c5660e3e5d35213f0efe13cdabedc1"
+    },
+    {
+      "run_id": "mlp16x16_lr0.03_seed2",
+      "architecture": "mlp16x16",
+      "learning_rate": 0.03,
+      "seed": 2,
+      "epochs": 3000,
+      "parameter_count": 468,
+      "checkpoint_bytes": 4949,
+      "max_abs_error": 0.0004357614250835029,
+      "mean_abs_error": 0.00012179714126281798,
+      "mean_kl": 7.970134074074939e-07,
+      "exploitability": 0.0010995148328522136,
+      "weights_digest": "50388edb42ee557b6440a333db31343a982407ba0e2c4e51e932bbdb1f0e18b0"
+    }
+  ],
+  "selected": {
+    "linear": {
+      "run_id": "linear_lr0.03_seed0",
+      "latency_ns_m2a_method": {
+        "table_lookup_ns": 20.333,
+        "table_agent_act_ns": 916.646,
+        "neural_forward_cpu_batch1_ns": 3463.875,
+        "neural_forward_cpu_batch12_ns": 3536.6455,
+        "neural_policy_cpu_batch12_float64_ns": 7210.75,
+        "neural_agent_act_cpu_ns": 10014.833,
+        "mps": {
+          "available": true,
+          "includes": "forward pass + copy of the logits back to the CPU",
+          "neural_forward_mps_batch1_ns": 131889.3125,
+          "neural_forward_mps_batch12_ns": 136028.9375,
+          "max_abs_logit_diff_vs_cpu": 0.0
+        }
+      }
+    },
+    "mlp16": {
+      "run_id": "mlp16_lr0.01_seed2",
+      "latency_ns_m2a_method": {
+        "table_lookup_ns": 20.458,
+        "table_agent_act_ns": 905.5415,
+        "neural_forward_cpu_batch1_ns": 5422.375,
+        "neural_forward_cpu_batch12_ns": 6079.25,
+        "neural_policy_cpu_batch12_float64_ns": 9984.6665,
+        "neural_agent_act_cpu_ns": 12371.4795,
+        "mps": {
+          "available": true,
+          "includes": "forward pass + copy of the logits back to the CPU",
+          "neural_forward_mps_batch1_ns": 132753.8545,
+          "neural_forward_mps_batch12_ns": 166835.375,
+          "max_abs_logit_diff_vs_cpu": 9.5367431640625e-07
+        }
+      }
+    },
+    "mlp16x16": {
+      "run_id": "mlp16x16_lr0.01_seed0",
+      "latency_ns_m2a_method": {
+        "table_lookup_ns": 20.8125,
+        "table_agent_act_ns": 912.583,
+        "neural_forward_cpu_batch1_ns": 7311.271,
+        "neural_forward_cpu_batch12_ns": 8463.4375,
+        "neural_policy_cpu_batch12_float64_ns": 12478.1875,
+        "neural_agent_act_cpu_ns": 14769.0,
+        "mps": {
+          "available": true,
+          "includes": "forward pass + copy of the logits back to the CPU",
+          "neural_forward_mps_batch1_ns": 136902.375,
+          "neural_forward_mps_batch12_ns": 190222.7915,
+          "max_abs_logit_diff_vs_cpu": 9.5367431640625e-07
+        }
+      }
+    }
+  }
+}

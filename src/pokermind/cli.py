@@ -80,6 +80,23 @@ def _build_parser() -> argparse.ArgumentParser:
     neural.add_argument("--no-benchmark", action="store_true", help="skip latency benchmarks")
     neural.add_argument("--output-dir", type=Path, default=Path("runs/m2a-neural"))
 
+    study = sub.add_parser(
+        "neural-study", help="M2B: training-stability, capacity and latency studies"
+    )
+    study.add_argument(
+        "--studies",
+        nargs="+",
+        choices=["stability", "capacity", "benchmark"],
+        default=["stability", "capacity", "benchmark"],
+    )
+    study.add_argument("--seeds", type=int, default=10, help="seeds 0..N-1 per configuration")
+    study.add_argument("--epochs", type=int, default=3_000)
+    study.add_argument("--learning-rates", type=float, nargs="+", default=[0.01, 0.03])
+    study.add_argument("--teacher-iterations", type=int, default=50_000)
+    study.add_argument("--benchmark-number", type=int, default=20_000)
+    study.add_argument("--benchmark-repeats", type=int, default=15)
+    study.add_argument("--output-dir", type=Path, default=Path("runs/m2b"))
+
     train = sub.add_parser("train-cfr", help="train vanilla CFR with exact evaluation")
     train.add_argument(
         "--checkpoints",
@@ -144,6 +161,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "train-neural":
         return _train_neural(args)
+    if args.command == "neural-study":
+        return _neural_study(args)
     if args.command == "train-cfr":
         return _train_cfr(args)
 
@@ -249,6 +268,47 @@ def _train_neural(args: argparse.Namespace) -> int:
     for arch, sel in doc["selected"].items():
         print(f"selected {arch}: {sel['run_id']}")
     print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    return 0
+
+
+def _neural_study(args: argparse.Namespace) -> int:
+    from pokermind.experiments.stability_study import StudyConfig, run_studies
+
+    try:
+        if args.seeds <= 0:
+            raise ValueError("--seeds must be positive")
+        config = StudyConfig(
+            seeds=tuple(range(args.seeds)),
+            learning_rates=tuple(args.learning_rates),
+            epochs=args.epochs,
+            teacher_iterations=args.teacher_iterations,
+            benchmark_number=args.benchmark_number,
+            benchmark_repeats=args.benchmark_repeats,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    out = run_studies(config, args.output_dir, args.studies)
+    if "stability" in out:
+        print("stability (pooled over architectures, learning rates and seeds):")
+        print(f"  {'procedure':<17}{'median expl.':>14}{'worst expl.':>13}{'degraded':>10}")
+        for name, g in out["stability"]["pooled"].items():
+            e = g["exploitability"]
+            print(
+                f"  {name:<17}{e['median']:>14.6f}{e['max']:>13.6f}"
+                f"{g['degraded_runs']:>6}/{g['runs']}"
+            )
+    if "capacity" in out:
+        print("capacity:")
+        for name, g in out["capacity"]["summary"].items():
+            print(
+                f"  {name:<14}{g['parameter_count']:>5} params  median expl "
+                f"{g['exploitability']['median']:.6f}  median max err "
+                f"{g['max_abs_error']['median']:.5f}"
+            )
+    for name, path in out["plots"].items():
+        print(f"plot {name}: {path or 'skipped (matplotlib not installed)'}")
+    print(f"results: {args.output_dir}")
     return 0
 
 

@@ -6,8 +6,9 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M2A, tiny neural policies distilled from the verified CFR strategy**
-(M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker engine).
+**Status: M2B, training stability, capacity study and Leduc readiness** (M2A:
+neural distillation of the CFR strategy; M1: vanilla CFR with exact
+evaluation; M0: the Kuhn Poker engine).
 
 ## Layout
 
@@ -29,6 +30,8 @@ tests/                   rules, payoffs, leakage, agents, simulation, CLI,
 docs/kuhn_poker.md       rules and state representation
 docs/concepts/cfr.md     CFR, best response and exploitability, worked example
 docs/concepts/neural_policy.md  layers, backprop, Adam, softmax, KL, distillation
+docs/experiments/        frozen M2A results, M2B stability/capacity/benchmark results
+docs/design/leduc_interface.md  proposed game interface for Leduc (not implemented)
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -76,6 +79,14 @@ and seeds, then reports imitation error, exact exploitability, payoffs, model
 size and latency against the 12-entry table (`docs/concepts/neural_policy.md`).
 Kuhn Poker has only 12 information sets, so these runs measure
 representation, not generalization.
+
+M2B: stability of training procedures, capacity sweep and latency benchmarks:
+
+```bash
+pokermind neural-study --output-dir runs/m2b
+```
+
+Results and methodology: `docs/experiments/m2b_results.md`.
 
 Optional cross-check against OpenSpiel (not a project dependency):
 

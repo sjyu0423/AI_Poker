@@ -6,19 +6,24 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M2B, training stability, capacity study and Leduc readiness** (M2A:
-neural distillation of the CFR strategy; M1: vanilla CFR with exact
-evaluation; M0: the Kuhn Poker engine).
+**Status: M3, Leduc Hold'em and generalized CFR/evaluation** (M2B: training
+stability; M2A: neural distillation; M1: vanilla CFR with exact evaluation;
+M0: the Kuhn Poker engine).
 
 ## Layout
 
 ```
 src/pokermind/
   games/kuhn.py          immutable config/state/info-state, rules, payoffs
+  games/base.py          M3 game interface: Game, GameState, Observation, chance nodes
+  games/kuhn_game.py     Kuhn behind the interface (adapter over games/kuhn.py)
+  games/leduc.py         Leduc Hold'em, matching OpenSpiel's leduc_poker
   agents/                Agent protocol, random/rule baselines, StrategyAgent (CFR)
   strategy.py            tabular strategy type and JSON file format
-  learning/cfr.py        vanilla CFR (simultaneous updates, full traversal)
-  evaluation/exact.py    exact EV, best response, NashConv, exploitability
+  learning/cfr.py        vanilla CFR for Kuhn (M1, kept as regression reference)
+  learning/game_cfr.py   vanilla CFR for any Game (M3)
+  evaluation/exact.py    exact EV, best response, NashConv, exploitability (Kuhn, M1)
+  evaluation/game_exact.py  the same for any Game (M3)
   evaluation/reference.py known Kuhn equilibrium family, game value -1/18
   neural/                M2A: encoding, teacher dataset, masked MLP, training, agent
   experiments/           CFR and neural-distillation runners, metrics and plots
@@ -31,7 +36,8 @@ docs/kuhn_poker.md       rules and state representation
 docs/concepts/cfr.md     CFR, best response and exploitability, worked example
 docs/concepts/neural_policy.md  layers, backprop, Adam, softmax, KL, distillation
 docs/experiments/        frozen M2A results, M2B stability/capacity/benchmark results
-docs/design/leduc_interface.md  proposed game interface for Leduc (not implemented)
+docs/design/leduc_interface.md  game interface design and what M3 implemented
+docs/games/leduc.md      Leduc rules, action aliases, turn order, information sets
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -60,6 +66,10 @@ python -m pokermind simulate --json --hands 1000
 # M1: train CFR, evaluate exactly at checkpoints, export strategies and plots
 pokermind train-cfr --output-dir runs/m1-cfr --seed 0
 pokermind simulate --agents cfr rule --strategy runs/m1-cfr/strategies/strategy_050000.json
+
+# M3: CFR on Leduc Hold'em (or Kuhn) through the generic game interface
+pokermind train-cfr --game leduc --output-dir runs/m3-leduc-cfr
+pokermind train-cfr --game kuhn --engine generic   # reproduces M1 bit for bit
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one
@@ -92,7 +102,7 @@ Optional cross-check against OpenSpiel (not a project dependency):
 
 ```bash
 pip install -e ".[crosscheck]"
-pytest tests/test_openspiel_crosscheck.py
+pytest tests/test_openspiel_crosscheck.py tests/test_openspiel_leduc.py
 ```
 
 The report includes the mean return per hand (± standard error) for each

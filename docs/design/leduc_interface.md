@@ -1,6 +1,8 @@
 # Design: the smallest game interface that supports Leduc Hold'em
 
-Status: **proposal (M2B)**. Nothing in this document is implemented yet.
+Status: **implemented in M3** (proposed in M2B). The implementation follows
+this design with the deviations listed in §7. Rules and conventions:
+`docs/games/leduc.md`.
 The goal is to run M1's CFR and exact evaluator, and M2's neural pipeline, on
 Leduc Hold'em by changing the *game boundary*, not by rewriting the
 algorithms.
@@ -179,3 +181,26 @@ should stop *before* neural work on Leduc:
 Neural distillation on Leduc, with a held-out information-set split, is the
 natural M4. It's the first experiment in this project where generalization
 can actually be measured.
+
+## 7. What M3 implemented, and where it deviates
+
+| Proposal | Implemented | Why |
+|---|---|---|
+| One shared `Observation` dataclass with `private`, `public` and `actions` fields | `Observation` is a **protocol** (`player`, `key`). Kuhn returns its existing `InfoState`; Leduc returns `LeducObservation` | Keeps Kuhn's observation type and keys unchanged; each game's observation lists only its own observable fields |
+| Keys derived from the observation only | Also exposed as `GameState.information_state_key(player)` | The CFR and evaluator hot paths need only the string |
+| `Game.encode` and `num_actions` | Left out | No neural work in M3; `action_codes` covers strategy files |
+| The Kuhn deal as chance nodes | **One** root chance node with the 6 ordered deals (1/6 each), in `all_deals()` order | Makes the generic CFR perform M1's exact floating-point operations: the full 50k digest `b8217a0c74657df799530f51315c1f8fa3d4c299a07f196af8474e65ffc0becc` is reproduced |
+| Port CFR and the evaluator to the interface | Added **beside** M1's code (`learning/game_cfr.py`, `evaluation/game_exact.py`). M1's modules are unchanged and serve as the regression reference | The brief asks not to rewrite the original CFR without justification. Tests compare the two bit for bit on Kuhn. |
+| Generic simulator | `simulation/game_runner.py`, sampling each chance node by inverting the CDF with one draw | M0's runner (`rng.permutation` deal) is kept for Kuhn, so M0 digests don't change |
+
+Measured risk outcomes:
+
+* **Summation order:** CFR on Kuhn is bit-identical. The generic evaluator's
+  best responses and NashConv are bit-identical too. The on-policy value
+  differs by at most about 6e-17, because the chance node computes
+  `Σ (1/6)·v` where M1 computed `Σ v / 6`.
+* **Conditional chance:** checked against OpenSpiel at every chance node, and
+  the exact deal distribution is uniform over all 120 ordered triples.
+* **Speed:** 18 ms per Leduc iteration after removing an immutability-guard
+  cost found by profiling, about 4.8 µs per decision-node visit. Full
+  traversal is practical, so no tree compilation was needed.

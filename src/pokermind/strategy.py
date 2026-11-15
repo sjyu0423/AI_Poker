@@ -93,3 +93,79 @@ def load_strategy(path: Path) -> dict[str, dict[Action, float]]:
     if document.get("digest") != strategy_digest(strategy):
         raise StrategyFormatError(f"{path}: digest mismatch (file edited or corrupted)")
     return strategy
+
+
+# -- integer-action strategies for any game (M3) ------------------------------------
+
+GameStrategy = Mapping[str, Mapping[int, float]]
+"""Information-set key -> {action id: probability}, for any ``Game``."""
+
+
+def game_strategy_to_jsonable(
+    strategy: GameStrategy, action_codes: tuple[str, ...]
+) -> dict[str, dict[str, float]]:
+    """Plain-JSON form with one-letter action codes. For Kuhn this is identical to
+    :func:`strategy_to_jsonable`, so digests and files are interchangeable."""
+    return {
+        key: {action_codes[a]: float(p) for a, p in strategy[key].items()}
+        for key in sorted(strategy)
+    }
+
+
+def game_strategy_digest(strategy: GameStrategy, action_codes: tuple[str, ...]) -> str:
+    canonical = json.dumps(
+        game_strategy_to_jsonable(strategy, action_codes), sort_keys=True, separators=(",", ":")
+    )
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def save_game_strategy(
+    path: Path,
+    game_name: str,
+    action_codes: tuple[str, ...],
+    strategy: GameStrategy,
+    metadata: Mapping[str, Any] | None = None,
+) -> None:
+    document = {
+        "format": STRATEGY_FORMAT,
+        "game": game_name,
+        "digest": game_strategy_digest(strategy, action_codes),
+        "metadata": dict(metadata or {}),
+        "strategy": game_strategy_to_jsonable(strategy, action_codes),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(document, indent=2) + "\n")
+
+
+def load_game_strategy(
+    path: Path, game_name: str, action_codes: tuple[str, ...]
+) -> dict[str, dict[int, float]]:
+    try:
+        document = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        raise StrategyFormatError(f"{path}: not valid JSON ({exc})") from None
+    if not isinstance(document, dict) or document.get("format") != STRATEGY_FORMAT:
+        raise StrategyFormatError(f"{path}: expected format {STRATEGY_FORMAT!r}")
+    if document.get("game") != game_name:
+        raise StrategyFormatError(
+            f"{path}: expected game {game_name!r}, got {document.get('game')!r}"
+        )
+    raw = document.get("strategy")
+    if not isinstance(raw, dict):
+        raise StrategyFormatError(f"{path}: strategy must be a JSON object")
+    by_code = {c: i for i, c in enumerate(action_codes)}
+    strategy: dict[str, dict[int, float]] = {}
+    for key, dist in raw.items():
+        if not isinstance(dist, dict):
+            raise StrategyFormatError(f"{path}: malformed entry for {key!r}")
+        parsed: dict[int, float] = {}
+        for code, prob in dist.items():
+            if code not in by_code:
+                raise StrategyFormatError(f"{path}: unknown action code {code!r} at {key!r}")
+            if isinstance(prob, bool) or not isinstance(prob, int | float):
+                raise StrategyFormatError(f"{path}: probability must be a number at {key!r}")
+            parsed[by_code[code]] = float(prob)
+        strategy[key] = parsed
+    if document.get("digest") != game_strategy_digest(strategy, action_codes):
+        raise StrategyFormatError(f"{path}: digest mismatch (file edited or corrupted)")
+    return strategy

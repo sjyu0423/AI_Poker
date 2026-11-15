@@ -103,8 +103,16 @@ def _build_parser() -> argparse.ArgumentParser:
         type=int,
         nargs="+",
         default=None,
-        help="increasing iteration counts to evaluate and export "
-        "(default: 1 10 100 500 1000 5000 10000 50000)",
+        help="increasing iteration counts to evaluate and export (default: kuhn 1 10 100 "
+        "500 1000 5000 10000 50000; leduc 1 10 100 500 1000 5000 10000)",
+    )
+    train.add_argument("--game", choices=["kuhn", "leduc"], default="kuhn")
+    train.add_argument(
+        "--engine",
+        choices=["legacy", "generic"],
+        default=None,
+        help="kuhn: 'legacy' (M1 code path, default) or 'generic' (M3 game interface); "
+        "leduc always uses 'generic'",
     )
     train.add_argument("--seed", type=int, default=0, help="seed for the simulation check")
     train.add_argument(
@@ -113,7 +121,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=100_000,
         help="hands per simulated match of the final strategy (0 to skip)",
     )
-    train.add_argument("--output-dir", type=Path, default=Path("runs/cfr"))
+    train.add_argument(
+        "--output-dir", type=Path, default=None, help="default: runs/cfr (kuhn), runs/<game>-cfr"
+    )
 
     sub.add_parser("agents", help="list registered agents")
     return parser
@@ -313,6 +323,14 @@ def _neural_study(args: argparse.Namespace) -> int:
 
 
 def _train_cfr(args: argparse.Namespace) -> int:
+    engine = args.engine or ("legacy" if args.game == "kuhn" else "generic")
+    if args.game == "leduc" and engine == "legacy":
+        print("error: leduc requires --engine generic", file=sys.stderr)
+        return 2
+    if engine == "generic":
+        return _train_game_cfr(args)
+    if args.output_dir is None:
+        args.output_dir = Path("runs/cfr")
     from pokermind.experiments import DEFAULT_CHECKPOINTS, CFRExperimentConfig, run_cfr_experiment
 
     try:
@@ -338,6 +356,64 @@ def _train_cfr(args: argparse.Namespace) -> int:
         print(
             f"simulated vs {sim['opponent']}: {sim['simulated_mean']:+.4f} ± {sim['std_error']:.4f}"
             f" (exact {sim['exact_expected']:+.4f}, z={sim['z_score']:+.2f})"
+        )
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    return 0
+
+
+def _train_game_cfr(args: argparse.Namespace) -> int:
+    from pokermind.experiments.game_cfr_experiment import (
+        DEFAULT_CHECKPOINTS,
+        GameCFRExperimentConfig,
+        run_game_cfr_experiment,
+    )
+    from pokermind.games.base import Game
+    from pokermind.games.kuhn_game import KuhnGame
+    from pokermind.games.leduc import LeducGame
+
+    game: Game = LeducGame() if args.game == "leduc" else KuhnGame()
+    output_dir = args.output_dir or Path(f"runs/{args.game}-cfr")
+    try:
+        config = GameCFRExperimentConfig(
+            checkpoints=tuple(args.checkpoints or DEFAULT_CHECKPOINTS[args.game]),
+            seed=args.seed,
+            simulation_hands=args.simulation_hands,
+            extra={"engine": "generic"},
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_game_cfr_experiment(game, config, output_dir)
+    tree, tr, mem = doc["tree"], doc["training"], doc["memory"]
+    print(
+        f"vanilla CFR on {args.game} (generic engine) -> {output_dir}\n"
+        f"tree: {tree['chance_nodes']} chance, {tree['decision_nodes']} decision, "
+        f"{tree['terminal_nodes']} terminal, {tree['information_sets']} information sets"
+    )
+    print(
+        f"{'iteration':>10}{'exploitability':>16}{'NashConv':>12}{'seat0 value':>13}"
+        f"{'EV vs unif':>12}{'train s':>9}{'eval s':>8}"
+    )
+    for cp in doc["checkpoints"]:
+        print(
+            f"{cp['iteration']:>10,}{cp['exploitability']:>16.6f}{cp['nash_conv']:>12.6f}"
+            f"{cp['self_play_value_seat0']:>+13.6f}{cp['expected_payoff_vs_uniform']:>+12.4f}"
+            f"{cp['train_seconds_cumulative']:>9.2f}{cp['eval_seconds']:>8.2f}"
+        )
+    print(
+        f"throughput: {tr['iterations_per_second']:.1f} it/s, "
+        f"{tr['microseconds_per_decision_visit']:.2f} us per decision visit"
+    )
+    print(
+        f"memory: tables {mem.get('table_array_bytes', 0):,} B, "
+        f"heap peak {mem.get('tracemalloc_peak_bytes', 0):,} B, "
+        f"process peak RSS {mem['process_peak_rss_bytes'] / 2**20:.0f} MiB"
+    )
+    sim = doc["simulation_check"]
+    if sim:
+        print(
+            f"simulated vs uniform: {sim['mean_returns'][0]:+.4f} ± {sim['std_errors'][0]:.4f} "
+            f"(exact {sim['exact_expected_agent0']:+.4f}, z={sim['z_score']:+.2f})"
         )
     print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
     return 0

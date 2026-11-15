@@ -9,6 +9,7 @@ reproducible.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -19,12 +20,12 @@ from pokermind.strategy import Strategy, load_strategy
 _ATOL = 1e-9
 
 
-def sample_action(
-    legal_actions: tuple[Action, ...],
-    probs: list[float],
+def sample_action[A](
+    legal_actions: Sequence[A],
+    probs: Sequence[float],
     rng: np.random.Generator,
     context: str = "",
-) -> Action:
+) -> A:
     """Sample one legal action; ``probs[i]`` is the probability of ``legal_actions[i]``.
 
     Uses exactly one uniform draw per decision, inverted through the CDF in

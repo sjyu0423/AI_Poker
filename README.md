@@ -6,7 +6,8 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M4, neural generalization on Leduc Hold'em** (M3: Leduc and
+**Status: M5, Bayesian opponent modelling on Leduc Hold'em** (M4: neural
+generalization; M3: Leduc and
 generalized CFR/evaluation; M2B: training stability; M2A: neural
 distillation; M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker
 engine).
@@ -29,6 +30,8 @@ src/pokermind/
   neural/                M2A: encoding, teacher dataset, masked MLP, training, agent
   neural/leduc_*.py      M4: Leduc encoding, canonical dataset and splits, neural agent
   neural/game_*.py       M4: size-agnostic policy network; training with validation
+  opponents/             M5: public contexts/records, simulated opponent population,
+                         exact public-context marginals, Dirichlet opponent model, CUSUM
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -43,6 +46,8 @@ docs/design/leduc_interface.md  game interface design and what M3 implemented
 docs/games/leduc.md      Leduc rules, action aliases, turn order, information sets
 docs/design/leduc_encoding.md  M4 features, suit canonicalization, splits
 docs/experiments/m4_leduc_neural.md  M4 results
+docs/design/opponent_modeling.md  M5 observability, contexts, model, evaluation, leakage
+docs/experiments/m5_opponent_modeling.md  M5 results
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -81,6 +86,9 @@ pokermind train-cfr --game leduc --checkpoints 1000 10000 20000 50000 100000 \
     --output-dir runs/m4-leduc-teacher
 pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_100000.json \
     --comparison-teacher runs/m3-leduc-cfr/strategies/strategy_010000.json
+
+# M5: learn simulated opponents' tendencies from public actions (hero = M4 teacher)
+pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

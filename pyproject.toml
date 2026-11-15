@@ -34,7 +34,7 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N"]
 # Math notation in docstrings and plot labels (σ strategy, α Kuhn parameter, − minus).
-allowed-confusables = ["σ", "α", "−"]
+allowed-confusables = ["σ", "α", "−", "×", "ℓ", "ρ"]
 
 [tool.mypy]
 python_version = "3.12"

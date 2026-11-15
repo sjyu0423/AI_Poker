@@ -7,6 +7,7 @@ Examples::
     pokermind agents
     pokermind train-cfr --checkpoints 100 1000 10000 --output-dir runs/cfr
     pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_100000.json
+    pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind simulate --agents cfr random --strategy runs/cfr/strategies/strategy_010000.json
 """
 
@@ -145,6 +146,16 @@ def _build_parser() -> argparse.ArgumentParser:
     leduc.add_argument("--benchmark-number", type=int, default=5_000)
     leduc.add_argument("--output-dir", type=Path, default=Path("runs/m4-leduc-neural"))
 
+    opp = sub.add_parser(
+        "opponent-study", help="M5: Bayesian opponent modelling and sample efficiency on Leduc"
+    )
+    opp.add_argument("--hero", type=Path, required=True, help="hero's Leduc strategy file")
+    opp.add_argument("--seeds", type=int, default=30, help="seeds per held-out opponent")
+    opp.add_argument("--tuning-seeds", type=int, default=10, help="seeds per development opponent")
+    opp.add_argument("--per-family", type=int, default=4, help="opponents per family and split")
+    opp.add_argument("--switching", type=int, default=8, help="switching opponents per split")
+    opp.add_argument("--output-dir", type=Path, default=Path("runs/m5-opponent-modeling"))
+
     sub.add_parser("agents", help="list registered agents")
     return parser
 
@@ -197,6 +208,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _train_cfr(args)
     if args.command == "leduc-neural":
         return _leduc_neural(args)
+    if args.command == "opponent-study":
+        return _opponent_study(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -485,6 +498,46 @@ def _leduc_neural(args: argparse.Namespace) -> int:
             f"  {row['split']:<9}{row['variant']:<15}{row['selection']:<11}"
             f"{cells[0]:>9}{cells[1]:>11}{cells[2]:>13}"
         )
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    print(f"results: {args.output_dir}")
+    return 0
+
+
+def _opponent_study(args: argparse.Namespace) -> int:
+    from pokermind.experiments.opponent_study import OpponentStudyConfig, run_opponent_study
+
+    try:
+        if not args.hero.is_file():
+            raise ValueError(f"hero strategy file not found: {args.hero}")
+        config = OpponentStudyConfig(
+            hero_path=args.hero,
+            seeds=args.seeds,
+            tuning_seeds=args.tuning_seeds,
+            per_family=args.per_family,
+            switching_per_split=args.switching,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_opponent_study(config, args.output_dir)
+    selected = doc["tuning"]["selected"]["main"]
+    print(
+        f"selected model: {selected['candidate']} "
+        f"(development excess {selected['mean_excess']:.4f})"
+    )
+    main_rows = doc["sample_efficiency"]["heldout"]["main"]
+    print(f"  {'hands':>6}{'excess log loss (95% CI)':>30}{'accuracy':>10}")
+    for budget, row in main_rows.items():
+        e = row["excess_log_loss"]
+        print(
+            f"  {budget:>6}{e['mean']:>12.4f} [{e['ci_low']:.4f}, {e['ci_high']:.4f}]"
+            f"{row['accuracy']['mean']:>10.3f}"
+        )
+    det = doc["change"]["detection"]
+    print(
+        f"change detection: {det['detected']}/{det['runs']} detected, median delay "
+        f"{det['delay_median']} hands"
+    )
     print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
     print(f"results: {args.output_dir}")
     return 0

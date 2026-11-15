@@ -6,9 +6,10 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M3, Leduc Hold'em and generalized CFR/evaluation** (M2B: training
-stability; M2A: neural distillation; M1: vanilla CFR with exact evaluation;
-M0: the Kuhn Poker engine).
+**Status: M4, neural generalization on Leduc Hold'em** (M3: Leduc and
+generalized CFR/evaluation; M2B: training stability; M2A: neural
+distillation; M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker
+engine).
 
 ## Layout
 
@@ -26,6 +27,8 @@ src/pokermind/
   evaluation/game_exact.py  the same for any Game (M3)
   evaluation/reference.py known Kuhn equilibrium family, game value -1/18
   neural/                M2A: encoding, teacher dataset, masked MLP, training, agent
+  neural/leduc_*.py      M4: Leduc encoding, canonical dataset and splits, neural agent
+  neural/game_*.py       M4: size-agnostic policy network; training with validation
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -38,6 +41,8 @@ docs/concepts/neural_policy.md  layers, backprop, Adam, softmax, KL, distillatio
 docs/experiments/        frozen M2A results, M2B stability/capacity/benchmark results
 docs/design/leduc_interface.md  game interface design and what M3 implemented
 docs/games/leduc.md      Leduc rules, action aliases, turn order, information sets
+docs/design/leduc_encoding.md  M4 features, suit canonicalization, splits
+docs/experiments/m4_leduc_neural.md  M4 results
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -70,6 +75,12 @@ pokermind simulate --agents cfr rule --strategy runs/m1-cfr/strategies/strategy_
 # M3: CFR on Leduc Hold'em (or Kuhn) through the generic game interface
 pokermind train-cfr --game leduc --output-dir runs/m3-leduc-cfr
 pokermind train-cfr --game kuhn --engine generic   # reproduces M1 bit for bit
+
+# M4: a stronger Leduc teacher, then neural distillation and generalization splits
+pokermind train-cfr --game leduc --checkpoints 1000 10000 20000 50000 100000 \
+    --output-dir runs/m4-leduc-teacher
+pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_100000.json \
+    --comparison-teacher runs/m3-leduc-cfr/strategies/strategy_010000.json
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

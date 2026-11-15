@@ -6,6 +6,7 @@ Examples::
     pokermind simulate --agents rule always-bet --hands 1000 --seed 7 --output run.json
     pokermind agents
     pokermind train-cfr --checkpoints 100 1000 10000 --output-dir runs/cfr
+    pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind simulate --agents cfr random --strategy runs/cfr/strategies/strategy_010000.json
 """
 
@@ -125,6 +126,25 @@ def _build_parser() -> argparse.ArgumentParser:
         "--output-dir", type=Path, default=None, help="default: runs/cfr (kuhn), runs/<game>-cfr"
     )
 
+    leduc = sub.add_parser(
+        "leduc-neural", help="M4: neural distillation and generalization on Leduc"
+    )
+    leduc.add_argument(
+        "--teacher", type=Path, required=True, help="Leduc CFR strategy file (the teacher)"
+    )
+    leduc.add_argument(
+        "--comparison-teacher", type=Path, default=None, help="an older teacher to compare"
+    )
+    leduc.add_argument("--seeds", type=int, default=10, help="seeds 0..N-1 per configuration")
+    leduc.add_argument("--epochs", type=int, default=5_000)
+    leduc.add_argument("--learning-rate", type=float, default=0.01)
+    leduc.add_argument(
+        "--splits", nargs="+", choices=["full", "random", "public", "history"], default=None
+    )
+    leduc.add_argument("--simulation-hands", type=int, default=50_000)
+    leduc.add_argument("--benchmark-number", type=int, default=5_000)
+    leduc.add_argument("--output-dir", type=Path, default=Path("runs/m4-leduc-neural"))
+
     sub.add_parser("agents", help="list registered agents")
     return parser
 
@@ -175,6 +195,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _neural_study(args)
     if args.command == "train-cfr":
         return _train_cfr(args)
+    if args.command == "leduc-neural":
+        return _leduc_neural(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -421,3 +443,48 @@ def _train_game_cfr(args: argparse.Namespace) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
+
+
+def _leduc_neural(args: argparse.Namespace) -> int:
+    from pokermind.experiments.leduc_neural_study import (
+        LeducNeuralStudyConfig,
+        run_leduc_neural_study,
+    )
+    from pokermind.neural.leduc_dataset import SPLIT_NAMES
+
+    try:
+        if args.seeds <= 0:
+            raise ValueError("--seeds must be positive")
+        if not args.teacher.is_file():
+            raise ValueError(f"teacher file not found: {args.teacher}")
+        config = LeducNeuralStudyConfig(
+            teacher_path=args.teacher,
+            comparison_teacher_path=args.comparison_teacher,
+            seeds=tuple(range(args.seeds)),
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            simulation_hands=args.simulation_hands,
+            benchmark_number=args.benchmark_number,
+            splits=tuple(args.splits) if args.splits else SPLIT_NAMES,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_leduc_neural_study(config, args.output_dir)
+    print(f"teacher exploitability {doc['teacher']['policy']['exploitability']:.6f}")
+    print(
+        f"  {'split':<9}{'variant':<15}{'selection':<11}{'test KL':>9}{'full expl':>11}"
+        f"{'hybrid expl':>13}"
+    )
+    for row in doc["summary"]:
+        cells = [
+            f"{row[n]['mean']:.4f}" if n in row else "-"
+            for n in ("test_kl", "full_exploitability", "hybrid_exploitability")
+        ]
+        print(
+            f"  {row['split']:<9}{row['variant']:<15}{row['selection']:<11}"
+            f"{cells[0]:>9}{cells[1]:>11}{cells[2]:>13}"
+        )
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    print(f"results: {args.output_dir}")
+    return 0

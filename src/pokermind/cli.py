@@ -8,6 +8,7 @@ Examples::
     pokermind train-cfr --checkpoints 100 1000 10000 --output-dir runs/cfr
     pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+    pokermind adaptive-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind simulate --agents cfr random --strategy runs/cfr/strategies/strategy_010000.json
 """
 
@@ -156,6 +157,16 @@ def _build_parser() -> argparse.ArgumentParser:
     opp.add_argument("--switching", type=int, default=8, help="switching opponents per split")
     opp.add_argument("--output-dir", type=Path, default=Path("runs/m5-opponent-modeling"))
 
+    adapt = sub.add_parser(
+        "adaptive-study", help="M6: opponent-adaptive strategies with exploitability budgets"
+    )
+    adapt.add_argument("--hero", type=Path, required=True, help="hero's Leduc CFR strategy file")
+    adapt.add_argument("--seeds", type=int, default=6, help="seeds per held-out opponent")
+    adapt.add_argument("--development-seeds", type=int, default=3)
+    adapt.add_argument("--change-seeds", type=int, default=6)
+    adapt.add_argument("--workers", type=int, default=0, help="processes (0 = one per CPU)")
+    adapt.add_argument("--output-dir", type=Path, default=Path("runs/m6-adaptive-strategy"))
+
     sub.add_parser("agents", help="list registered agents")
     return parser
 
@@ -210,6 +221,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _leduc_neural(args)
     if args.command == "opponent-study":
         return _opponent_study(args)
+    if args.command == "adaptive-study":
+        return _adaptive_study(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -538,6 +551,39 @@ def _opponent_study(args: argparse.Namespace) -> int:
         f"change detection: {det['detected']}/{det['runs']} detected, median delay "
         f"{det['delay_median']} hands"
     )
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    print(f"results: {args.output_dir}")
+    return 0
+
+
+def _adaptive_study(args: argparse.Namespace) -> int:
+    from pokermind.experiments.adaptive_study import AdaptiveStudyConfig, run_adaptive_study
+
+    try:
+        if not args.hero.is_file():
+            raise ValueError(f"hero strategy file not found: {args.hero}")
+        config = AdaptiveStudyConfig(
+            hero_path=args.hero,
+            seeds=args.seeds,
+            development_seeds=args.development_seeds,
+            change_seeds=args.change_seeds,
+            workers=args.workers,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_adaptive_study(config, args.output_dir)
+    print(f"tuned on development opponents: {doc['tuning']['chosen']}")
+    held = doc["heldout"]["methods"]
+    print(f"  {'hands':>6}  {'method':<18}{'gain (95% CI)':>28}{'max expl.':>11}")
+    for budget in [str(b) for b in doc["config"]["budgets"]]:
+        for method in ("budget_max", "gated", "br_map"):
+            row = held[method][budget]
+            g = row["gain"]
+            print(
+                f"  {budget:>6}  {method:<18}{g['mean']:>+10.4f} [{g['ci_low']:+.4f}, "
+                f"{g['ci_high']:+.4f}]{row['max_exploitability']:>11.3f}"
+            )
     print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
     print(f"results: {args.output_dir}")
     return 0

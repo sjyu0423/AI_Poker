@@ -6,8 +6,8 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M5, Bayesian opponent modelling on Leduc Hold'em** (M4: neural
-generalization; M3: Leduc and
+**Status: M6, opponent-adaptive play with an exploitability budget** (M5:
+Bayesian opponent modelling; M4: neural generalization; M3: Leduc and
 generalized CFR/evaluation; M2B: training stability; M2A: neural
 distillation; M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker
 engine).
@@ -32,6 +32,8 @@ src/pokermind/
   neural/game_*.py       M4: size-agnostic policy network; training with validation
   opponents/             M5: public contexts/records, simulated opponent population,
                          exact public-context marginals, Dirichlet opponent model, CUSUM
+  adaptive/              M6: card-conditional policy reconstruction (latent-card EM, Gibbs),
+                         hero best responses, realization mixtures, exploitability budgets
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -48,6 +50,8 @@ docs/design/leduc_encoding.md  M4 features, suit canonicalization, splits
 docs/experiments/m4_leduc_neural.md  M4 results
 docs/design/opponent_modeling.md  M5 observability, contexts, model, evaluation, leakage
 docs/experiments/m5_opponent_modeling.md  M5 results
+docs/design/adaptive_strategy.md  M6 reconstruction, mixtures, budget, protocol
+docs/experiments/m6_adaptive_strategy.md  M6 results
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -89,6 +93,9 @@ pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_10000
 
 # M5: learn simulated opponents' tendencies from public actions (hero = M4 teacher)
 pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+
+# M6: adapt to observed opponents within an exact exploitability budget (multi-process)
+pokermind adaptive-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

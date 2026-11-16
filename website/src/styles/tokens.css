@@ -1,0 +1,60 @@
+:root {
+  /* Surfaces */
+  --pm-bg: #12151a;
+  --pm-bg-elevated: #181c23;
+  --pm-bg-soft: #1e242e;
+  --pm-bg-panel: #161a21;
+  --pm-border: rgba(214, 198, 160, 0.12);
+  --pm-border-strong: rgba(214, 198, 160, 0.22);
+
+  /* Ink */
+  --pm-ink: #e8e6e1;
+  --pm-ink-muted: #a8b0bc;
+  --pm-ink-faint: #7a8494;
+
+  /* Accents */
+  --pm-emerald: #1f6f5b;
+  --pm-emerald-bright: #2f9a7c;
+  --pm-emerald-soft: rgba(47, 154, 124, 0.14);
+  --pm-champagne: #d6c6a0;
+  --pm-champagne-bright: #e8d9b0;
+  --pm-champagne-soft: rgba(214, 198, 160, 0.12);
+  --pm-danger-soft: rgba(176, 92, 78, 0.18);
+
+  /* Suit motifs (restrained) */
+  --pm-suit-red: #b05c4e;
+  --pm-suit-black: #9aa3b2;
+
+  /* Typography */
+  --pm-font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino,
+    serif;
+  --pm-font-body: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+  --pm-font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --pm-fs-hero: clamp(3rem, 8vw, 5.5rem);
+  --pm-fs-h2: clamp(1.75rem, 3.5vw, 2.5rem);
+  --pm-fs-h3: clamp(1.15rem, 2vw, 1.35rem);
+  --pm-fs-body: 1.0625rem;
+  --pm-fs-small: 0.875rem;
+  --pm-lh-tight: 1.15;
+  --pm-lh-body: 1.65;
+
+  /* Layout */
+  --pm-max: 72rem;
+  --pm-gutter: clamp(1.25rem, 4vw, 2.5rem);
+  --pm-section-y: clamp(4.5rem, 10vw, 7.5rem);
+  --pm-radius: 0.35rem;
+  --pm-radius-lg: 0.75rem;
+
+  /* Motion */
+  --pm-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --pm-dur: 420ms;
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --pm-dur: 1ms;
+  }
+}

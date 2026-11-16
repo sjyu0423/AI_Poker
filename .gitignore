@@ -14,5 +14,12 @@ runs/
 .DS_Store
 .ipynb_checkpoints/
 
+# portfolio website (W1)
+website/node_modules/
+website/.next/
+website/out/
+website/*.tsbuildinfo
+website/coverage/
+
 # local tool configuration (machine-specific)
 .claude/

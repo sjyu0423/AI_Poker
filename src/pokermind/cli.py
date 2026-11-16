@@ -10,6 +10,8 @@ Examples::
     pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind adaptive-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind robust-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+    pokermind reliability convergence --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+    pokermind research-config --check
     pokermind simulate --agents cfr random --strategy runs/cfr/strategies/strategy_010000.json
 """
 
@@ -19,6 +21,7 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 
 from pokermind.agents import AGENT_REGISTRY, make_agent
@@ -185,6 +188,46 @@ def _build_parser() -> argparse.ArgumentParser:
     robust.add_argument("--workers", type=int, default=0, help="processes (0 = one per CPU)")
     robust.add_argument("--output-dir", type=Path, default=Path("runs/m7a-robust-response"))
 
+    rel = sub.add_parser(
+        "reliability", help="M7B: convergence, calibration, frozen evaluation and benchmark"
+    )
+    rel.add_argument(
+        "stage",
+        choices=("convergence", "calibrate", "evaluate", "benchmark"),
+        help="calibrate uses development opponents only; evaluate needs the frozen config",
+    )
+    rel.add_argument("--hero", type=Path, required=True, help="hero's Leduc CFR strategy file")
+    rel.add_argument(
+        "--m7a-metrics",
+        type=Path,
+        default=Path("runs/m7a-robust-response/metrics.json"),
+        help="M7A results, for the reproduction checks (optional)",
+    )
+    rel.add_argument(
+        "--config",
+        type=Path,
+        default=Path("configs/pokermind-research-v1.json"),
+        help="frozen research configuration (evaluate, benchmark)",
+    )
+    rel.add_argument("--iterations", type=int, default=500)
+    rel.add_argument("--seeds", type=int, default=3)
+    rel.add_argument("--development-seeds", type=int, default=2)
+    rel.add_argument("--change-seeds", type=int, default=2)
+    rel.add_argument("--bait-count", type=int, default=24)
+    rel.add_argument("--workers", type=int, default=0, help="processes (0 = one per CPU)")
+    rel.add_argument("--output-dir", type=Path, default=Path("runs/m7b-adaptive-reliability"))
+
+    frz = sub.add_parser(
+        "research-config", help="M7B: write or validate the versioned research configuration"
+    )
+    frz.add_argument("--output", type=Path, default=Path("configs/pokermind-research-v1.json"))
+    frz.add_argument(
+        "--calibration",
+        type=Path,
+        help="calibration.json whose frozen proposal sets the selection fields",
+    )
+    frz.add_argument("--check", action="store_true", help="validate --output and print it")
+
     sub.add_parser("agents", help="list registered agents")
     return parser
 
@@ -243,6 +286,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _adaptive_study(args)
     if args.command == "robust-study":
         return _robust_study(args)
+    if args.command == "reliability":
+        return _reliability(args)
+    if args.command == "research-config":
+        return _research_config(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -639,4 +686,94 @@ def _robust_study(args: argparse.Namespace) -> int:
         print(f"    {family:<5}{cells}")
     print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
     print(f"results: {args.output_dir}")
+    return 0
+
+
+def _reliability(args: argparse.Namespace) -> int:
+    from pokermind.experiments import reliability_study as rs
+    from pokermind.research import load_research_config
+
+    try:
+        if not args.hero.is_file():
+            raise ValueError(f"hero strategy file not found: {args.hero}")
+        config = rs.ReliabilityConfig(
+            hero_path=args.hero,
+            m7a_metrics=args.m7a_metrics,
+            iterations=args.iterations,
+            seeds=args.seeds,
+            development_seeds=args.development_seeds,
+            change_seeds=args.change_seeds,
+            bait_count=args.bait_count,
+            workers=args.workers,
+        )
+        research = (
+            load_research_config(args.config) if args.stage in ("evaluate", "benchmark") else None
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.stage == "convergence":
+        doc = rs.run_convergence(config, args.output_dir)
+        for cp, gaps in doc["summary"]["gap"].items():
+            cells = " ".join(f"p={p}:{g['mean']:.5f}" for p, g in gaps.items())
+            print(f"  {cp:>5} iterations, mean RNR-game gap: {cells}")
+    elif args.stage == "calibrate":
+        doc = rs.run_calibration(config, args.output_dir)
+        print(f"calibration: {doc['calibration_choice']}")
+        print(f"frozen proposal: {doc['frozen_proposal']}")
+    elif args.stage == "evaluate":
+        assert research is not None
+        doc = rs.run_evaluation(config, research, args.output_dir)
+        print(f"M7A reproduction: {doc['m7a_reproduction']}")
+        gain = doc["heldout"]["gain"]["frozen"][str(rs.PRIMARY_DELTA)]
+        print(
+            "  held-out gain (frozen rule): "
+            + " ".join(f"{n}:{v['mean']:+.4f}" for n, v in gain.items())
+        )
+    else:
+        assert research is not None
+        doc = rs.run_benchmark(config, research, args.output_dir)
+        for v, s in doc["summary"].items():
+            if "mean_seconds" in s:
+                print(f"  {v:<18}{s['mean_seconds']:6.2f} s  x{s['speedup_vs_m7a']:.1f}")
+    print(f"results: {args.output_dir} ({doc['elapsed_seconds']:.0f} s)")
+    return 0
+
+
+def _research_config(args: argparse.Namespace) -> int:
+
+    from pokermind.research import (
+        ResearchConfig,
+        SelectionConfig,
+        load_research_config,
+        save_research_config,
+    )
+
+    try:
+        if args.check:
+            config = load_research_config(args.output)
+            print(json.dumps(config.to_dict(), indent=2))
+            print(f"digest: {config.digest()} (valid)")
+            return 0
+        base = ResearchConfig()
+        if args.calibration is not None:
+            cal = json.loads(args.calibration.read_text())
+            prop = cal["frozen_proposal"]
+            base = ResearchConfig(
+                selection=SelectionConfig(
+                    rule=prop["rule"], z=float(prop["z"]), inflation=float(prop["inflation"])
+                ),
+                reconstruction=replace(base.reconstruction, temperature=float(prop["temperature"])),
+                provenance={
+                    "selection": prop,
+                    "calibration_choice": cal["calibration_choice"],
+                    "source": str(args.calibration),
+                    "evidence": "development opponents only",
+                },
+            )
+        save_research_config(base, args.output)
+    except (ValueError, FileNotFoundError, KeyError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"wrote {args.output} (digest {base.digest()})")
     return 0

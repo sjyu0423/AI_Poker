@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from pokermind.evaluation.game_exact import GameInfoSet
 from pokermind.games.base import CHANCE, TERMINAL
 from pokermind.games.leduc import LeducGame, LeducObservation, LeducState
 from pokermind.strategy import GameStrategy
@@ -133,3 +134,54 @@ class RNRGame:
 def hero_table(average: GameStrategy) -> dict[str, dict[int, float]]:
     """Hero's part of a strategy over the modified game, keyed by Leduc keys."""
     return {k[2:]: dict(v) for k, v in average.items() if k.startswith("H|")}
+
+
+@dataclass(frozen=True, slots=True)
+class RNRBounds:
+    """Exact bounds on the value of the RNR game (M7B convergence measure)."""
+
+    lower: float
+    """What hero's strategy guarantees: ``p·v(x, model) − (1 − p)·expl(x)``."""
+    upper: float
+    """Hero's best response to the opponent's realization mixture
+    ``p·model + (1 − p)·y``; no hero strategy gets more against it."""
+
+    @property
+    def gap(self) -> float:
+        """``upper − lower`` = NashConv of the profile in the RNR game (0 at equilibrium)."""
+        return self.upper - self.lower
+
+
+def rnr_bounds(
+    game: LeducGame,
+    specs: dict[str, GameInfoSet],
+    hero: GameStrategy,
+    opponent_free: GameStrategy,
+    model: GameStrategy,
+    p: float,
+) -> RNRBounds:
+    """Exact equilibrium gap of ``(hero, opponent_free)`` in the RNR game.
+
+    Hero's value against the free opponent's best reply, averaged over seats,
+    is ``−expl(hero)``, so hero's guarantee is
+    ``p·v(hero, model) − (1 − p)·expl(hero)``. Against a fixed free strategy
+    ``y`` the opponent hero faces, not knowing the coin, is the *realization*
+    mixture of ``model`` and ``y``; hero's best response to it bounds the game
+    value from above. Both bounds are computed with the M3/M6 exact
+    evaluators in the original game; a test checks the gap against the
+    NashConv of the explicit :class:`RNRGame`.
+    """
+    from pokermind.adaptive.response import (  # local: keeps the game module light
+        exploitability,
+        hero_best_response,
+        hero_value,
+        own_reach,
+        realization_mixture,
+    )
+
+    lower = p * hero_value(game, hero, model, specs) - (1.0 - p) * exploitability(game, hero, specs)
+    mixed = realization_mixture(
+        opponent_free, model, p, own_reach(game, opponent_free), own_reach(game, model)
+    )
+    upper = hero_value(game, hero_best_response(game, mixed, specs), mixed, specs)
+    return RNRBounds(lower, upper)

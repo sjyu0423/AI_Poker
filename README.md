@@ -6,8 +6,11 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M7A, robust exploitation with Restricted Nash Response and
-Data-Biased Response** (M6: opponent-adaptive play with an exploitability
+**Status: M7B, research freeze of the adaptive Leduc baseline**: a frozen,
+versioned configuration (`configs/pokermind-research-v1.json`) with a
+batched RNR solver, calibrated uncertainty-aware selection and held-out
+robustness results; see `docs/research/research_freeze.md` (M7A: robust
+exploitation with Restricted Nash Response and Data-Biased Response; M6: opponent-adaptive play with an exploitability
 budget; M5: Bayesian opponent modelling; M4: neural generalization; M3: Leduc and
 generalized CFR/evaluation; M2B: training stability; M2A: neural
 distillation; M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker
@@ -36,7 +39,10 @@ src/pokermind/
   adaptive/              M6: card-conditional policy reconstruction (latent-card EM, Gibbs),
                          hero best responses, realization mixtures, exploitability budgets
   robust/                M7A: compiled game tree, vectorized restricted CFR(+), Restricted
-                         Nash Response and Data-Biased Response, explicit RNR game
+                         Nash Response and Data-Biased Response, explicit RNR game;
+                         M7B: batched RNR solver and evaluator (batch.py), budgeted
+                         uncertainty-aware selection (selection.py)
+  research.py            M7B: versioned research configuration and digest
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -57,6 +63,9 @@ docs/design/adaptive_strategy.md  M6 reconstruction, mixtures, budget, protocol
 docs/experiments/m6_adaptive_strategy.md  M6 results
 docs/design/robust_response.md  M7A RNR/DBR, guarantees, approximations, selection
 docs/experiments/m7a_robust_response.md  M7A results
+docs/experiments/m7b_adaptive_reliability.md  M7B convergence, calibration, speed, robustness
+docs/research/research_freeze.md  M7B frozen architecture, evidence, reproduction
+configs/pokermind-research-v1.json  frozen research configuration (digest-checked)
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -104,6 +113,12 @@ pokermind adaptive-study --hero runs/m4-leduc-teacher/strategies/strategy_100000
 
 # M7A: RNR and DBR vs the M6 mixture at equal exact exploitability budgets (multi-process)
 pokermind robust-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+
+# M7B: solver convergence, calibration (development opponents), frozen held-out
+# evaluation and selection benchmark; validate the frozen configuration
+pokermind reliability {convergence,calibrate,evaluate,benchmark} \
+    --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+pokermind research-config --check
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

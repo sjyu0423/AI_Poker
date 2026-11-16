@@ -1,0 +1,94 @@
+{
+  "name": "pokermind-research",
+  "version": "1.0.0",
+  "game": "leduc_poker",
+  "hero": {
+    "path": "runs/m4-leduc-teacher/strategies/strategy_100000.json",
+    "digest": "3f1136d492159d56eab73efc2c9a365dfc930eb20d7ae13b105cc994e17874bf",
+    "exploitability": 0.0029968965501324385,
+    "iterations": 100000
+  },
+  "world": {
+    "per_family": 4,
+    "out_of_population_per_family": 2,
+    "switching_per_split": 8,
+    "bait_switch_count": 24
+  },
+  "reconstruction": {
+    "prior_strengths": [
+      2.0,
+      8.0
+    ],
+    "default_prior": [
+      "population",
+      2.0
+    ],
+    "min_hands_for_selection": 10,
+    "posterior_samples": 16,
+    "burn_in": 10,
+    "thin": 2,
+    "temperature": 0.5
+  },
+  "response": {
+    "method": "rnr",
+    "solver": "CFR+ (alternating, regrets floored, linear averaging)",
+    "iterations": 500,
+    "p_grid": [
+      0.0,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0
+    ]
+  },
+  "selection": {
+    "budget_delta": 0.1,
+    "reported_deltas": [
+      0.0,
+      0.02,
+      0.05,
+      0.1,
+      0.25
+    ],
+    "rule": "lcb",
+    "z": 1.6449,
+    "inflation": 1.25,
+    "tolerance": 1e-12,
+    "certificate": "M3 recursive exact evaluator"
+  },
+  "change_detection": {
+    "short_decay": 0.8,
+    "threshold": 5.0,
+    "drift": 0.0,
+    "retain": 10
+  },
+  "provenance": {
+    "selection": {
+      "variant": "lcb_calibrated_z1.6449",
+      "rule": "lcb",
+      "temperature": 0.5,
+      "z": 1.6449,
+      "inflation": 1.25,
+      "criterion": "variants with development mean gain at delta=0.1 >= 0.9 x best; then lowest harm rate"
+    },
+    "calibration_choice": {
+      "temperature": 0.5,
+      "inflation": 1.25,
+      "two_sided_error": 0.008342233750381456,
+      "rule": "smallest two-sided calibration error of gain intervals"
+    },
+    "source": "runs/m7b-adaptive-reliability/calibration.json (pokermind reliability calibrate)",
+    "evidence": "development opponents only",
+    "iterations": "500 CFR+ iterations kept: mean RNR-game gap 0.0019/0.0006/0.0002 (p=0.1) at 500/1000/2000 iterations; same selected p as 2000 iterations in 99% of snapshots at delta=0.1; RNR-minus-mixture conclusions unchanged (runs/m7b-adaptive-reliability/convergence.json)",
+    "frozen_on": "2026-11-15, before any held-out evaluation"
+  },
+  "digest": "a67a28260305391f3a5a271f13e6aa5088e5b9e078f23522faf2e1b888b6c1a0"
+}

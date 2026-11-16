@@ -51,3 +51,38 @@ def test_cfr_plus_matches_openspiel(iterations: int) -> None:
         row = reference.policy_for_key(key_map[key])
         for action, prob in dist.items():
             assert prob == pytest.approx(row[action], abs=1e-12), key
+
+
+@pytest.mark.parametrize("iterations", [1, 7])
+def test_batched_cfr_plus_matches_openspiel(iterations: int) -> None:
+    """M7B batched solver with p = 0 (no restriction) is CFR+ and matches OpenSpiel."""
+    from pokermind.robust.batch import BatchedRNR
+
+    os_game = pyspiel.load_game("leduc_poker")
+    key_map: dict[str, str] = {}
+
+    def walk(ours: GameState, theirs: Any) -> None:
+        if ours.is_terminal:
+            return
+        if ours.is_chance_node:
+            for outcome, _ in ours.chance_outcomes():
+                walk(ours.apply(outcome), theirs.child(outcome))
+            return
+        player = ours.current_player
+        key_map[ours.information_state_key(player)] = theirs.information_state_string(player)
+        for action in ours.legal_actions():
+            walk(ours.apply(action), theirs.child(action))
+
+    walk(GAME.initial_state(), os_game.new_initial_state())
+    tree = CompiledTree(GAME)
+    solver = BatchedRNR(tree, tree.normalize(np.zeros(tree.num_slots)), [0.0])
+    solver.iterate(iterations)
+    ours = tree.to_table(solver.result().hero[0])
+    theirs = os_cfr.CFRPlusSolver(os_game)
+    for _ in range(iterations):
+        theirs.evaluate_and_update_policy()
+    reference = theirs.average_policy()
+    for key, dist in ours.items():
+        row = reference.policy_for_key(key_map[key])
+        for action, prob in dist.items():
+            assert prob == pytest.approx(row[action], abs=1e-12), key

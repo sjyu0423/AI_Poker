@@ -209,9 +209,18 @@ class CardConditionalModel:
         start: Mapping[str, Vector] | None = None,
         burn_in: int = 10,
         thin: int = 2,
+        temperature: float = 1.0,
     ) -> list[Theta]:
         """Data-augmentation Gibbs: sample every hand's card, then ``θ`` from its
-        Dirichlet posterior. Deterministic given ``rng``."""
+        Dirichlet posterior. Deterministic given ``rng``.
+
+        ``temperature < 1`` tempers the likelihood of the action counts (M7B):
+        ``θ`` is drawn from ``Dirichlet(τ·counts + s·m)``, so the data count as
+        ``τ`` times as many hands and the posterior widens. ``τ = 1`` is the
+        untempered M6 sampler, unchanged.
+        """
+        if not 0.0 < temperature <= 1.0:
+            raise ValueError(f"temperature must be in (0, 1], got {temperature}")
         theta = {k: v.copy() for k, v in (start or self.prior_mean).items()}
         samples: list[Theta] = []
         sweep = 0
@@ -227,7 +236,7 @@ class CardConditionalModel:
             s = self.strength
             theta = {}
             for k, m in self.prior_mean.items():
-                draw = rng.dirichlet(counts[k] + s * m)
+                draw = rng.dirichlet(temperature * counts[k] + s * m)
                 draw = np.maximum(draw, 1e-12)
                 theta[k] = draw / draw.sum()
             sweep += 1

@@ -52,17 +52,28 @@ All product copy, metrics, limitations, and links live in
 
 Screenshots are copies of `docs/screenshots/` in `public/screenshots/`.
 
+## Pages
+
+| route | purpose |
+|---|---|
+| `/` | W1 homepage showcase |
+| `/research/cfr/` | W2 interactive CFR explainer |
+
+Deep links must work under `/AI_Poker/` after static export (trailing slash).
+
 ## Architecture
 
 ```
 website/
   public/screenshots/     real app captures
   src/app/                App Router pages, global CSS
-  src/components/         homepage sections
-  src/content/site.ts     metrics, links, limitations
-  src/lib/paths.ts        GitHub Pages path helpers
-  tests/                  content + navigation helper tests
+  src/app/research/cfr/   CFR explainer route
+  src/components/         homepage + CFR exhibit sections
+  src/content/            metrics, links, M1 checkpoint data
+  src/lib/                path helpers + regret matching
+  tests/                  content, math, and navigation tests
 ```
 
-Out of scope for W1: deployment workflow, extra pages, interactive play,
-and any changes to the research freeze or `web/` app.
+Out of scope until later milestones: GitHub Pages deployment workflow,
+opponent-modeling exhibit (W3), and any changes to the research freeze or
+`web/` app.

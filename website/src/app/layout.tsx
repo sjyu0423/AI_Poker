@@ -3,6 +3,7 @@ import { Fraunces, Source_Sans_3, IBM_Plex_Mono } from "next/font/google";
 import { siteMeta } from "@/content/site";
 import "./globals.css";
 import "./components.css";
+import "./cfr.css";
 
 const display = Fraunces({
   subsets: ["latin"],

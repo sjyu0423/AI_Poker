@@ -1,10 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { navItems, links, siteMeta } from "@/content/site";
+import { navItems as homeNavItems, links, siteMeta } from "@/content/site";
+import { withBasePath } from "@/lib/paths";
 
-export function SiteHeader() {
+export interface NavItem {
+  label: string;
+  href: string;
+}
+
+interface SiteHeaderProps {
+  brandHref?: string;
+  navItems?: readonly NavItem[];
+  trailingHref?: string;
+  trailingLabel?: string;
+}
+
+export function SiteHeader({
+  brandHref = "#top",
+  navItems = homeNavItems,
+  trailingHref = links.github,
+  trailingLabel = "GitHub",
+}: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
+  const trailingExternal = trailingHref.startsWith("http");
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -19,7 +38,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell site-header__inner">
-        <a className="site-header__brand" href="#top" aria-label={`${siteMeta.name} home`}>
+        <a className="site-header__brand" href={brandHref} aria-label={`${siteMeta.name} home`}>
           <span className="site-header__mark" aria-hidden="true">
             ♠
           </span>
@@ -39,22 +58,29 @@ export function SiteHeader() {
 
         <nav id="site-nav" className={`site-header__nav ${open ? "is-open" : ""}`} aria-label="Primary">
           <ul>
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <a href={item.href} onClick={() => setOpen(false)}>
-                  {item.label}
-                </a>
-              </li>
-            ))}
+            {navItems.map((item) => {
+              const href =
+                item.href.startsWith("/") && !item.href.startsWith("//")
+                  ? withBasePath(item.href)
+                  : item.href;
+              return (
+                <li key={item.href}>
+                  <a href={href} onClick={() => setOpen(false)}>
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
           <a
             className="site-header__github"
-            href={links.github}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={trailingHref}
+            {...(trailingExternal
+              ? { target: "_blank", rel: "noopener noreferrer" }
+              : {})}
             onClick={() => setOpen(false)}
           >
-            GitHub
+            {trailingLabel}
           </a>
         </nav>
       </div>

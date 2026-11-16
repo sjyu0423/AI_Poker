@@ -1,6 +1,7 @@
 import { hero } from "@/content/site";
 import { Button } from "@/components/Button";
 import { HeroVisual } from "@/components/HeroVisual";
+import { withBasePath } from "@/lib/paths";
 
 export function Hero() {
   return (
@@ -13,7 +14,10 @@ export function Hero() {
           <p className="hero__summary">{hero.summary}</p>
           <div className="hero__actions">
             <Button href={hero.primaryCta.href}>{hero.primaryCta.label}</Button>
-            <Button href={hero.secondaryCta.href} variant="secondary" external>
+            <Button href={withBasePath(hero.cfrCta.href)} variant="secondary">
+              {hero.cfrCta.label}
+            </Button>
+            <Button href={hero.secondaryCta.href} variant="ghost" external>
               {hero.secondaryCta.label}
             </Button>
             <Button href={hero.releaseCta.href} variant="ghost" external>

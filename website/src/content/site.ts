@@ -29,6 +29,7 @@ export const links = {
     "https://github.com/sjyu0423/AI_Poker/blob/main/docs/research/research_freeze.md",
   quickStart:
     "https://github.com/sjyu0423/AI_Poker/blob/main/README.md#quick-start-macos",
+  cfrPage: "/research/cfr/",
   cfr: "https://github.com/sjyu0423/AI_Poker/blob/main/docs/concepts/cfr.md",
   m4: "https://github.com/sjyu0423/AI_Poker/blob/main/docs/experiments/m4_leduc_neural.md",
   m5: "https://github.com/sjyu0423/AI_Poker/blob/main/docs/experiments/m5_opponent_modeling.md",
@@ -48,6 +49,7 @@ export const hero = {
   primaryCta: { label: "Explore the Research", href: "#research" },
   secondaryCta: { label: "View on GitHub", href: links.github },
   releaseCta: { label: "v1.0.0 release", href: links.release },
+  cfrCta: { label: "Interactive CFR explainer", href: links.cfrPage },
   localNote:
     "This site is a research showcase. The playable app runs locally from the GitHub release—not in the browser here.",
 } as const;
@@ -291,6 +293,7 @@ export const navItems = [
   { label: "Difference", href: "#difference" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Research", href: "#research" },
+  { label: "CFR", href: links.cfrPage },
   { label: "Preview", href: "#preview" },
   { label: "Technology", href: "#technology" },
 ] as const;

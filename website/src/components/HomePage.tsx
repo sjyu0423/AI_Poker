@@ -7,6 +7,7 @@ import { ResearchHighlights } from "@/components/ResearchHighlights";
 import { AppPreview } from "@/components/AppPreview";
 import { Technology } from "@/components/Technology";
 import { FinalCta } from "@/components/FinalCta";
+import { withBasePath } from "@/lib/paths";
 
 export function HomePage() {
   return (
@@ -14,7 +15,7 @@ export function HomePage() {
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <SiteHeader />
+      <SiteHeader brandHref={withBasePath("/")} />
       <main id="main">
         <Hero />
         <Difference />

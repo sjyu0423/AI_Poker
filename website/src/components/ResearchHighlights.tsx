@@ -4,6 +4,8 @@ import {
   researchHighlights,
   links,
 } from "@/content/site";
+import { withBasePath } from "@/lib/paths";
+import { Button } from "@/components/Button";
 
 const kindLabel = {
   exact: "Exact guarantee",
@@ -64,6 +66,13 @@ export function ResearchHighlights() {
         <p className="research-disclaimer" role="note">
           {researchDisclaimer}
         </p>
+
+        <div className="hero__actions" style={{ marginTop: "1.5rem" }}>
+          <Button href={withBasePath(links.cfrPage)}>Open the interactive CFR explainer</Button>
+          <Button href={links.cfr} variant="secondary" external>
+            Technical CFR note
+          </Button>
+        </div>
       </div>
     </section>
   );

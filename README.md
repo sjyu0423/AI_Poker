@@ -6,9 +6,10 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M8A, local game backend**: a FastAPI server (`pokermind serve`)
-to play heads-up Leduc against the frozen adaptive AI, with background,
-certified strategy updates; see `docs/design/app_backend.md` (M7B: research
+**Status: M8B, playable web interface** (`web/`, Next.js): play heads-up
+Leduc against the adaptive AI in the browser; see `web/README.md` (M8A: a
+FastAPI server, `pokermind serve`, with background, certified strategy
+updates, `docs/design/app_backend.md`; M7B: research
 freeze of the adaptive Leduc baseline: a frozen,
 versioned configuration (`configs/pokermind-research-v1.json`) with a
 batched RNR solver, calibrated uncertainty-aware selection and held-out
@@ -73,6 +74,7 @@ docs/research/research_freeze.md  M7B frozen architecture, evidence, reproductio
 configs/pokermind-research-v1.json  frozen research configuration (digest-checked)
 docs/design/app_backend.md  M8A architecture, gameplay rules, update safety, API contract
 research/                experiment notebooks/scripts (kept apart from the package)
+web/                     M8B: Next.js web interface (client of the M8A API), see web/README.md
 ```
 
 Dependency direction: `games` ← `strategy` ← {`agents`, `learning`,
@@ -128,6 +130,9 @@ pokermind research-config --check
 
 # M8A: play against the adaptive AI through a local API (pip install -e ".[app]")
 pokermind serve          # http://127.0.0.1:8000/docs
+
+# M8B: the web interface (in a second terminal; Node.js >= 20.9)
+cd web && npm install && npm run build && npm run start   # http://localhost:3000
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

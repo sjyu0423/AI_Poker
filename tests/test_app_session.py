@@ -362,3 +362,55 @@ def test_recompute_reproduces_the_frozen_m7b_procedure(app_ctx: AppContext) -> N
     assert got.p == expected["p"]
     assert got.certified_exploitability == expected["exploitability"]
     assert got.certified_exploitability <= app_ctx.budget
+
+
+# -- M8C: action labels and tendency fields -------------------------------------------------
+
+
+def test_action_labels_say_what_happened_at_the_table(app_ctx: AppContext) -> None:
+    session = manager(app_ctx).create(seed=31, recompute_every=10_000)
+    play(session, 40, human_seed=12)
+    seen = set()
+    for hand in session.hands:
+        state = app_ctx.game.initial_state()
+        events = iter(hand.events)
+        for move in hand.moves:
+            if not state.is_chance_node:
+                event = next(events)
+                facing = state.contributions[0] != state.contributions[1]
+                expected = {
+                    (0, True): "fold",
+                    (1, False): "check",
+                    (1, True): "call",
+                    (2, False): "bet",
+                    (2, True): "raise",
+                }[(move, facing)]
+                assert event.action == move and event.label == expected
+                seen.add(expected)
+            state = state.apply(move)
+        view = session.hand_view(hand)
+        assert [a["label"] for a in view["actions"]] == [e.label for e in hand.events]
+    assert seen == {"fold", "check", "call", "bet", "raise"}
+
+
+def test_tendencies_report_prior_and_observed_frequencies(app_ctx: AppContext) -> None:
+    session = manager(app_ctx).create(seed=8, recompute_every=10_000)
+    for t in session.metrics()["estimates"]["opponent_tendencies"]:
+        assert t["observations"] == 0 and t["prior_strength"] == 64.0
+        for a in t["actions"].values():
+            assert a["observed_frequency"] is None
+            assert a["posterior_mean"] == pytest.approx(a["population_prior_mean"])
+        assert sum(a["population_prior_mean"] for a in t["actions"].values()) == pytest.approx(1)
+    play(session, 30, human_seed=2)
+    tendencies = session.metrics()["estimates"]["opponent_tendencies"]
+    assert any(t["observations"] > 0 for t in tendencies)
+    for t in tendencies:
+        n = t["observations"]
+        for a in t["actions"].values():
+            if n == 0:
+                assert a["observed_frequency"] is None
+                continue
+            assert a["observed_frequency"] == pytest.approx(a["observed"] / n)
+            # the posterior mean lies between the prior and the observed frequency
+            lo, hi = sorted((a["population_prior_mean"], a["observed_frequency"]))
+            assert lo - 1e-12 <= a["posterior_mean"] <= hi + 1e-12

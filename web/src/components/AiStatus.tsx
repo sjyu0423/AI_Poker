@@ -11,10 +11,11 @@ const SOURCES: Record<StrategySummary["source"], string> = {
 interface AiStatusProps {
   strategy: StrategySummary;
   metrics: SessionMetrics | null;
+  onOpenDashboard?: () => void;
 }
 
 /** Read-only AI status. Verified numbers only; detailed model estimates are for M8C. */
-export function AiStatus({ strategy, metrics }: AiStatusProps) {
+export function AiStatus({ strategy, metrics, onOpenDashboard }: AiStatusProps) {
   const updates = metrics?.strategy_updates;
   const learning = strategy.recomputation_running || updates?.running === true;
   return (
@@ -48,6 +49,11 @@ export function AiStatus({ strategy, metrics }: AiStatusProps) {
         A new strategy is used only from the next hand, and only after its exploitability has
         been verified exactly against the limit.
       </p>
+      {onOpenDashboard && (
+        <button type="button" className="btn btn-ghost btn-small link-btn" onClick={onOpenDashboard}>
+          See what PokerMind has learned →
+        </button>
+      )}
       {updates?.last_failure && (
         <p className="muted small">
           The last update did not complete ({updates.last_failure.kind}); the verified strategy

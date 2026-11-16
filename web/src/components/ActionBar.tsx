@@ -50,7 +50,9 @@ export function ActionBar({ hand, pending, disabled = false, onAct, onDeal }: Ac
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
       if (typingTarget(event.target) || locked) return;
       const key = event.key.toLowerCase();
-      if (canDeal && (key === "n" || key === "enter") && !(event.target instanceof HTMLButtonElement)) {
+      // Enter on a focused button already activates it; N works from anywhere.
+      const enterElsewhere = key === "enter" && !(event.target instanceof HTMLButtonElement);
+      if (canDeal && (key === "n" || enterElsewhere)) {
         event.preventDefault();
         onDeal();
         return;

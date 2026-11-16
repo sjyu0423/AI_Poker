@@ -7,6 +7,7 @@ import { useGame } from "@/lib/useGame";
 
 import { ActionBar } from "./ActionBar";
 import { AiStatus } from "./AiStatus";
+import { Dashboard } from "./Dashboard";
 import { chips } from "./format";
 import { Guide } from "./Guide";
 import { History } from "./History";
@@ -59,11 +60,53 @@ function NewSessionButton({
   );
 }
 
+type View = "play" | "learn";
+
+function ViewTabs({ view, onChange }: { view: View; onChange: (v: View) => void }) {
+  const tabs: [View, string][] = [
+    ["play", "Play"],
+    ["learn", "How PokerMind learns"],
+  ];
+  return (
+    <div className="tabs" role="tablist" aria-label="View">
+      {tabs.map(([id, label], i) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          id={`tab-${id}`}
+          aria-selected={view === id}
+          aria-controls={`panel-${id}`}
+          tabIndex={view === id ? 0 : -1}
+          className={`tab${view === id ? " active" : ""}`}
+          onClick={() => onChange(id)}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+            e.preventDefault();
+            const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+            if (next) {
+              onChange(next[0]);
+              document.getElementById(`tab-${next[0]}`)?.focus();
+            }
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Game({ api }: { api?: PokerMindApi }) {
   const game = useGame(api);
-  const { phase, session, history, metrics, pending, notice } = game;
+  const { phase, session, history, metrics, strategy, pending, notice } = game;
   const hand = session?.hand ?? null;
   const offline = phase === "disconnected";
+  const [view, setView] = useState<View>("play");
+  const showView = (v: View) => {
+    setView(v);
+    if (v === "learn") void game.refresh();
+  };
 
   return (
     <div className="app">
@@ -132,7 +175,26 @@ export function Game({ api }: { api?: PokerMindApi }) {
         </div>
       )}
 
-      <main className="layout">
+      {session && (phase === "playing" || offline) && (
+        <ViewTabs view={view} onChange={showView} />
+      )}
+
+      {session && (phase === "playing" || offline) && view === "learn" ? (
+        <main id="panel-learn" role="tabpanel" aria-labelledby="tab-learn" className="learn-view">
+          <Dashboard
+            metrics={metrics}
+            strategy={strategy}
+            pending={pending || offline}
+            onRefresh={() => void game.refresh()}
+          />
+        </main>
+      ) : (
+      <main
+        className="layout"
+        {...(session && (phase === "playing" || offline)
+          ? { id: "panel-play", role: "tabpanel", "aria-labelledby": "tab-play" }
+          : {})}
+      >
         <div className="main-col">
           {phase === "booting" && (
             <div className="empty" role="status">
@@ -194,11 +256,16 @@ export function Game({ api }: { api?: PokerMindApi }) {
 
         {session && (
           <aside className="side-col">
-            <AiStatus strategy={session.strategy} metrics={metrics} />
+            <AiStatus
+              strategy={session.strategy}
+              metrics={metrics}
+              onOpenDashboard={() => showView("learn")}
+            />
             <History hands={history} total={session.hands_played} />
           </aside>
         )}
       </main>
+      )}
 
       <footer className="footer muted small">
         Local session · nothing is stored on disk · the server forgets sessions when it restarts

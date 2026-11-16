@@ -116,6 +116,8 @@ class ActionEvent:
     """``"human"`` or ``"ai"``."""
     round: int
     action: int
+    label: str
+    """As the action read at the table: check, bet, call, raise or fold."""
 
 
 @dataclass(slots=True)
@@ -220,7 +222,8 @@ class GameSession:
             return self.view()
 
     def _apply(self, hand: Hand, move: int, actor: str) -> None:
-        hand.events.append(ActionEvent(actor, hand.state.round_index + 1, move))
+        label = _action_label(hand.state, move)
+        hand.events.append(ActionEvent(actor, hand.state.round_index + 1, move, label))
         hand.moves.append(move)
         hand.state = hand.state.apply(move)
 
@@ -313,7 +316,12 @@ class GameSession:
             "public_card": None if state.public is None else card_name(state.public),
             "round": state.round_index + 1,
             "actions": [
-                {"actor": e.actor, "round": e.round, "action": ACTION_NAMES[e.action]}
+                {
+                    "actor": e.actor,
+                    "round": e.round,
+                    "action": ACTION_NAMES[e.action],
+                    "label": e.label,
+                }
                 for e in hand.events
             ],
             "contributions": {"human": contrib[human], "ai": contrib[ai]},
@@ -448,7 +456,12 @@ class GameSession:
             }
 
     def _tendencies(self) -> list[dict[str, Any]]:
-        """Posterior of the human's action frequencies per coarse betting situation."""
+        """Posterior of the human's action frequencies per coarse betting situation.
+
+        Each action also reports the development-population prior mean (what the model
+        assumes before seeing this player) and the raw observed frequency (None without
+        observations). The prior weighs ``prior_strength`` pseudo-observations, so the
+        posterior moves away from it only as the player's own decisions accumulate."""
         model = self.observer.public_model()
         prior, alpha = model.prior, M5_MODEL.alpha_coarse
         assert COARSE_LEVEL < NUM_LEVELS
@@ -461,18 +474,23 @@ class GameSession:
             params = n + alpha * prior.mean(COARSE_LEVEL, key, size)
             a0 = float(params.sum())
             actions = {}
+            base = prior.mean(COARSE_LEVEL, key, size)
+            total = float(n.sum())
             for i, label in enumerate(labels):
                 ai = float(params[i])
                 actions[label] = {
                     "posterior_mean": ai / a0,
                     "interval_90": [beta_ppf(tail, ai, a0 - ai), beta_ppf(1 - tail, ai, a0 - ai)],
                     "observed": float(n[i]),
+                    "observed_frequency": float(n[i]) / total if total > 0 else None,
+                    "population_prior_mean": float(base[i]),
                 }
             out.append(
                 {
                     "situation": key,
                     "description": description,
-                    "observations": float(n.sum()),
+                    "observations": total,
+                    "prior_strength": float(alpha),
                     "actions": actions,
                 }
             )

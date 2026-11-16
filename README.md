@@ -6,8 +6,10 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M8B, playable web interface** (`web/`, Next.js): play heads-up
-Leduc against the adaptive AI in the browser; see `web/README.md` (M8A: a
+**Status: M8C, learning dashboard**: the web interface (`web/`, Next.js)
+now shows what PokerMind has observed and estimated about the player and how
+its certified strategy evolves; see `web/README.md` (M8B: playable web
+interface; M8A: a
 FastAPI server, `pokermind serve`, with background, certified strategy
 updates, `docs/design/app_backend.md`; M7B: research
 freeze of the adaptive Leduc baseline: a frozen,

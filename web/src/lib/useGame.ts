@@ -20,7 +20,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, ConnectionError, PokerMindApi } from "./api";
-import type { ActionName, HandView, SessionMetrics, SessionState } from "./types";
+import type {
+  ActionName,
+  HandView,
+  SessionMetrics,
+  SessionState,
+  StrategyStatus,
+} from "./types";
 
 export type Phase = "booting" | "no_session" | "playing" | "lost" | "disconnected";
 
@@ -38,6 +44,7 @@ export interface Game {
   session: SessionState | null;
   history: HandView[];
   metrics: SessionMetrics | null;
+  strategy: StrategyStatus | null;
   pending: boolean;
   notice: Notice | null;
   dismissNotice: () => void;
@@ -45,6 +52,8 @@ export interface Game {
   deal: () => Promise<void>;
   act: (action: ActionName) => Promise<void>;
   retry: () => Promise<void>;
+  /** Re-read history, metrics and strategy (e.g. when the dashboard opens). */
+  refresh: () => Promise<void>;
 }
 
 function describe(err: unknown): string {
@@ -59,6 +68,7 @@ export function useGame(api?: PokerMindApi): Game {
   const [session, setSession] = useState<SessionState | null>(null);
   const [history, setHistory] = useState<HandView[]>([]);
   const [metrics, setMetrics] = useState<SessionMetrics | null>(null);
+  const [strategy, setStrategy] = useState<StrategyStatus | null>(null);
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const busy = useRef(false);
@@ -84,20 +94,24 @@ export function useGame(api?: PokerMindApi): Game {
     setSession(null);
     setHistory([]);
     setMetrics(null);
+    setStrategy(null);
     window.sessionStorage.removeItem(SESSION_KEY);
   }, []);
 
-  /** History and metrics: secondary views, refreshed after hands and while learning. */
+  /** History, metrics and strategy: secondary views, refreshed after hands and while
+   * learning. */
   const refreshSide = useCallback(
     async (id: string, handsPlayed: number) => {
       const offset = Math.max(0, handsPlayed - HISTORY_SIZE);
-      const [page, m] = await Promise.all([
+      const [page, m, st] = await Promise.all([
         client.history(id, offset, HISTORY_SIZE),
         client.metrics(id),
+        client.strategy(id),
       ]);
       if (current.current?.session_id !== id) return;
       setHistory([...page.hands].reverse());
       setMetrics(m);
+      setStrategy(st);
     },
     [client],
   );
@@ -251,6 +265,18 @@ export function useGame(api?: PokerMindApi): Game {
     [client, refreshSide, run],
   );
 
+  const refresh = useCallback(
+    () =>
+      run(async () => {
+        const id = current.current?.session_id;
+        if (!id) return;
+        const state = await client.getSession(id);
+        apply(state);
+        await refreshSide(id, state.hands_played);
+      }),
+    [client, apply, refreshSide, run],
+  );
+
   // While the AI recomputes in the background, poll its status (never during a request).
   const learning =
     session?.strategy.recomputation_running === true ||
@@ -284,6 +310,7 @@ export function useGame(api?: PokerMindApi): Game {
     session,
     history,
     metrics,
+    strategy,
     pending,
     notice,
     dismissNotice: () => setNotice(null),
@@ -291,5 +318,6 @@ export function useGame(api?: PokerMindApi): Game {
     deal,
     act,
     retry,
+    refresh,
   };
 }

@@ -158,7 +158,8 @@ are `{"detail": "..."}` with these status codes:
     "hand_number": 4, "status": "awaiting_human" | "complete",
     "human_seat": 0, "first_to_act": "human" | "ai",
     "human_card": "K1", "public_card": null | "Q0", "round": 1 | 2,
-    "actions": [{"actor": "human" | "ai", "round": 1, "action": "raise"}],
+    "actions": [{"actor": "human" | "ai", "round": 1, "action": "raise",
+                 "label": "check" | "bet" | "call" | "raise" | "fold"}],
     "contributions": {"human": 3, "ai": 1}, "pot": 4,
     "to_act": "human" | null,
     "legal_actions": [{"action": "fold" | "call" | "raise", "label": "fold" | "check" | "call" | "bet" | "raise"}],
@@ -176,6 +177,9 @@ are `{"detail": "..."}` with these status codes:
 
 **Further notes:**
 * Cards are rank (J, Q, K) plus suit digit. `winner: null` is a split pot.
+* An action's `label` is how it read at the table when it was made
+  (`call` with nothing owed is a check, `raise` with nothing owed is a bet).
+  It is set by the server (added in M8C).
 * `state_version` increases with every state change. The client must echo
   the version it acted on; a stale or duplicated submission gets a 409 and
   changes nothing.
@@ -185,7 +189,7 @@ are `{"detail": "..."}` with these status codes:
 | section | contents | nature |
 |---|---|---|
 | `verified` | active strategy (version, source, RNR p, certified exploitability, digest, hands used), exploitability limit, baseline exploitability, δ, observation counts (hands observed / in model, human decisions and showdowns in the model, change resets), results, research and hero digests | exact: counted or computed by the exact evaluator |
-| `estimates` | the human's action tendencies in six betting situations (posterior mean, 90 % credible interval, observed count); the active strategy's model estimates (prior chosen, lower-bound score, posterior mean and sd of gain over CFR); the change-detector statistic and threshold | probabilistic; carries a disclaimer that calibration was measured only on simulated development opponents, **not for human players** |
+| `estimates` | the human's action tendencies in six betting situations (posterior mean, 90 % credible interval, observed count, observed frequency or null, development-population prior mean, and the prior's weight `prior_strength` in pseudo-observations); the active strategy's model estimates (prior chosen, lower-bound score, posterior mean and sd of gain over CFR); the change-detector statistic and threshold | probabilistic; carries a disclaimer that calibration was measured only on simulated development opponents, **not for human players** |
 | `strategy_updates` | running job, pending follow-up, interval, next scheduled hand count, last success, last failure, counters | operational |
 
 ## 5. Limits

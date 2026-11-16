@@ -41,10 +41,10 @@ describe("gameplay", () => {
             to_act: null,
             legal_actions: [],
             actions: [
-              { actor: "human", round: 1, action: "call" },
-              { actor: "ai", round: 1, action: "call" },
-              { actor: "human", round: 2, action: "call" },
-              { actor: "ai", round: 2, action: "call" },
+              { actor: "human", round: 1, action: "call", label: "check" },
+              { actor: "ai", round: 1, action: "call", label: "check" },
+              { actor: "human", round: 2, action: "call", label: "check" },
+              { actor: "ai", round: 2, action: "call", label: "check" },
             ],
             result: {
               ended_by: "showdown",
@@ -85,7 +85,7 @@ describe("gameplay", () => {
         hand: hand({
           human_seat: 1,
           first_to_act: "ai",
-          actions: [{ actor: "ai", round: 1, action: "raise" }],
+          actions: [{ actor: "ai", round: 1, action: "raise", label: "bet" }],
           contributions: { human: 1, ai: 3 },
           pot: 4,
           legal_actions: [
@@ -144,8 +144,8 @@ describe("gameplay", () => {
           to_act: null,
           legal_actions: [],
           actions: [
-            { actor: "human", round: 1, action: "raise" },
-            { actor: "ai", round: 1, action: "fold" },
+            { actor: "human", round: 1, action: "raise", label: "bet" },
+            { actor: "ai", round: 1, action: "fold", label: "fold" },
           ],
           result: { ended_by: "fold", winner: "human", human_net: 1, ai_net: -1, pot: 4, ai_card: null },
         }),

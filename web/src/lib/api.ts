@@ -16,6 +16,7 @@ import type {
   ServerConfig,
   SessionMetrics,
   SessionState,
+  StrategyStatus,
 } from "./types";
 
 export class ApiError extends Error {
@@ -121,6 +122,10 @@ export class PokerMindApi {
   history(id: string, offset: number, limit: number): Promise<HistoryPage> {
     const q = new URLSearchParams({ offset: String(offset), limit: String(limit) });
     return this.request("GET", `/sessions/${encodeURIComponent(id)}/history?${q}`);
+  }
+
+  strategy(id: string): Promise<StrategyStatus> {
+    return this.request("GET", `/sessions/${encodeURIComponent(id)}/strategy`);
   }
 
   metrics(id: string): Promise<SessionMetrics> {

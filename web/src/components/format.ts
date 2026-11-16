@@ -5,16 +5,17 @@ export function chips(n: number): string {
   return `${value > 0 ? "+" : ""}${value}`;
 }
 
-/** Past actions as the server reports them. The server's history does not distinguish a
- * check from a call, or a bet from a raise, so neither does this text. */
-const WORDS: Record<ActionEvent["action"], [string, string]> = {
+/** A past action as it read at the table (the server's label). */
+const WORDS: Record<ActionEvent["label"], [string, string]> = {
   fold: ["fold", "folds"],
-  call: ["check/call", "checks/calls"],
-  raise: ["bet/raise", "bets/raises"],
+  check: ["check", "checks"],
+  call: ["call", "calls"],
+  bet: ["bet", "bets"],
+  raise: ["raise", "raises"],
 };
 
 export function describeEvent(e: ActionEvent): string {
-  const [you, they] = WORDS[e.action];
+  const [you, they] = WORDS[e.label];
   return e.actor === "human" ? `You ${you}` : `PokerMind ${they}`;
 }
 
@@ -26,4 +27,8 @@ export function resultHeadline(result: HandResult): string {
 
 export function exploitability(x: number): string {
   return `${x.toFixed(4)} chips/hand`;
+}
+
+export function percent(x: number): string {
+  return `${Math.round(x * 100)}%`;
 }

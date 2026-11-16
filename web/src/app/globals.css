@@ -685,6 +685,381 @@ kbd,
   font-size: 0.92rem;
 }
 
+/* -- view tabs and learning dashboard (M8C) ----------------------------------------------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+
+.tab {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--emerald-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--emerald-strong);
+}
+
+.link-btn {
+  width: 100%;
+  justify-content: flex-start;
+  color: var(--emerald);
+}
+
+.learn-view {
+  flex: 1;
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dash-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-top p {
+  margin: 0;
+}
+
+.dash-section .panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sub-title {
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+}
+
+.kind {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+.kind-observation {
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd;
+}
+
+.kind-estimate {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+}
+
+.kind-certified {
+  background: var(--emerald-soft);
+  color: var(--pos);
+}
+
+.kind-status {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+}
+
+.counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.counts div {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.counts dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.counts dd {
+  margin: 2px 0 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.disclaimer {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.08);
+  font-size: 0.9rem;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+
+.lg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.lg-mean {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.lg-interval {
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.35);
+}
+
+.lg-prior {
+  width: 2px;
+  height: 12px;
+  background: #e2e8f0;
+}
+
+.empty-inline {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+}
+
+.tgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.tcard {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  min-width: 0;
+}
+
+.tcard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tcard-head h4 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.badge-warn {
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fcd34d;
+}
+
+.trow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 92px 64px;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 0.85rem;
+}
+
+.trow-label {
+  text-transform: capitalize;
+}
+
+.trow-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.trow-seen {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.track-interval {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.35);
+}
+
+.track-mean {
+  position: absolute;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.track-prior {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  margin-left: -1px;
+  background: #e2e8f0;
+}
+
+.statements {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: #d2dcd8;
+}
+
+.evo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.meter-wrap {
+  margin-top: 14px;
+}
+
+.meter {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: visible;
+}
+
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 7px;
+  background: linear-gradient(90deg, var(--emerald-strong), var(--emerald));
+}
+
+.meter-base {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #e2e8f0;
+}
+
+.meter-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.versions tr[aria-current="true"] td {
+  color: var(--pos);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .evo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .tabs {
+    align-self: stretch;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0 8px;
+  }
+
+  .tgrid {
+    grid-template-columns: 1fr;
+  }
+
+  .trow {
+    grid-template-columns: 40px minmax(0, 1fr) 76px;
+  }
+
+  .trow-seen {
+    grid-column: 2 / 4;
+    text-align: left;
+    margin-top: -2px;
+  }
+
+  .dash-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* -- motion -------------------------------------------------------------------------------- */
 
 @keyframes flip {

@@ -13,3 +13,6 @@ htmlcov/
 runs/
 .DS_Store
 .ipynb_checkpoints/
+
+# local tool configuration (machine-specific)
+.claude/

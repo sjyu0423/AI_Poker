@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { inPlayFrom } from "@/components/Dashboard";
 import { Game } from "@/components/Game";
 import { Table } from "@/components/Table";
 import { SESSION_KEY } from "@/lib/useGame";
@@ -163,6 +164,18 @@ describe("learning dashboard", () => {
     }));
     await user.keyboard("n");
     await waitFor(() => expect(server.count("POST /sessions/s1/hands")).toBe(1));
+  });
+});
+
+describe("version history", () => {
+  it("marks a version replaced before any hand was dealt with it", () => {
+    const v1 = version();
+    const v2 = version({ version: 2, source: "cfr_fallback", based_on_hands: 10, installed_after_hand: 25 });
+    const v3 = version({ version: 3, source: "rnr", based_on_hands: 25, installed_after_hand: 25 });
+    const all = [v1, v2, v3];
+    expect(inPlayFrom(v1, all)).toBe("1");
+    expect(inPlayFrom(v2, all)).toBe("replaced before use");
+    expect(inPlayFrom(v3, all)).toBe("26");
   });
 });
 

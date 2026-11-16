@@ -31,8 +31,11 @@ class SessionManager:
         allow_client_seed: bool = False,
         max_sessions: int = MAX_SESSIONS,
         session_ids: Callable[[], str] | None = None,
+        defaults: SessionSettings | None = None,
     ) -> None:
         self.ctx, self.backend = ctx, backend
+        self.defaults = defaults or SessionSettings()
+        """Settings for sessions that do not specify their own (operational, not research)."""
         self.allow_client_seed = allow_client_seed
         self.max_sessions = max_sessions
         self._ids = session_ids or (lambda: uuid.uuid4().hex)
@@ -47,7 +50,7 @@ class SessionManager:
     ) -> GameSession:
         if seed is not None and not self.allow_client_seed:
             raise SessionError("fixed seeds are disabled on this server")
-        defaults = SessionSettings()
+        defaults = self.defaults
         try:
             settings = SessionSettings(
                 recompute_every if recompute_every is not None else defaults.recompute_every,

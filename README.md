@@ -1,28 +1,97 @@
 # PokerMind
 
-PokerMind is a local-first poker AI research and training project. The long-term
-goal is an agent that learns an opponent's tendencies from the actions it
-observes and adjusts its strategy to them, while staying reasonably hard to
-exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
-validated in small games first.
+**A local poker AI that learns how you play, and exploits it only within an
+exactly verified safety limit.**
 
-**Status: M8C, learning dashboard**: the web interface (`web/`, Next.js)
-now shows what PokerMind has observed and estimated about the player and how
-its certified strategy evolves; see `web/README.md` (M8B: playable web
-interface; M8A: a
-FastAPI server, `pokermind serve`, with background, certified strategy
-updates, `docs/design/app_backend.md`; M7B: research
-freeze of the adaptive Leduc baseline: a frozen,
-versioned configuration (`configs/pokermind-research-v1.json`) with a
-batched RNR solver, calibrated uncertainty-aware selection and held-out
-robustness results, `docs/research/research_freeze.md`; M7A: robust
-exploitation with Restricted Nash Response and Data-Biased Response; M6: opponent-adaptive play with an exploitability
-budget; M5: Bayesian opponent modelling; M4: neural generalization; M3: Leduc and
-generalized CFR/evaluation; M2B: training stability; M2A: neural
-distillation; M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker
-engine).
+PokerMind plays heads-up **Leduc Hold'em** (a small research poker game)
+against you in the browser.
+* **It starts unbeatable-ish.** Its baseline is a near-equilibrium strategy
+  computed with Counterfactual Regret Minimization (CFR).
+* **It watches you.** A Bayesian model estimates how often you fold, call
+  and raise in each betting situation.
+* **It adapts safely.** Periodically, in the background, it re-solves its
+  strategy with Restricted Nash Response. A new strategy goes into play only
+  after its exploitability has been computed **exactly** and found within a
+  fixed limit.
+* **It explains itself.** A dashboard shows what it observed, what it
+  estimates (with uncertainty), and every certified strategy version.
 
-## Layout
+![PokerMind learning dashboard](docs/screenshots/07-dashboard-strategy.png)
+
+## At a glance
+
+| | |
+|---|---|
+| **Guarantee** (exact, checked by computer) | Every strategy the AI plays loses at most **0.1030 chips/hand** to a perfect counter-strategy; the CFR baseline is at 0.0030. |
+| **Measured** (simulated opponents, 95 % CIs) | After 100 hands, safe adaptation gains **+0.131 chips/hand** over the baseline on held-out opponents, vs +0.016 for a simpler mixing method. Up to **+0.619** on unfamiliar styles. A calibrated confidence rule cut losing runs from 6.7 % to 2.3 %. |
+| **Not claimed** | Results against real human players; anything about Texas Hold'em. |
+| **Engineering** | Python 3.12, NumPy, FastAPI, Next.js 16 / React 19 / TypeScript. 520 Python and 36 frontend tests, strict MyPy, 20 cross-checks against DeepMind's OpenSpiel. |
+
+The plain-language story, with links to every result:
+**[docs/overview.md](docs/overview.md)**.
+
+## Quick start (macOS)
+
+**Requires** Python 3.12, Node.js ≥ 20.9 (≥ 22 for the screenshot script)
+and about 600 MB of disk (about 1.5 GB with the `[dev]` extra, which includes PyTorch).
+
+```bash
+# one-time setup
+python3.12 -m venv .venv
+.venv/bin/pip install -e ".[app]"         # add [dev] for tests and research tools
+(cd web && npm ci)
+.venv/bin/pokermind launch --train-hero   # trains the frozen CFR hero, ~30 minutes, once
+
+# every time
+.venv/bin/pokermind launch                # then open http://localhost:3000; Ctrl-C stops everything
+```
+
+* **What `pokermind launch` does:**
+  * checks Python, Node.js, the dependencies, the frozen configuration and
+    the hero's digest, and the ports;
+  * builds the web app when needed;
+  * starts the backend and the web app;
+  * prints the URL.
+
+  Every failure message includes the fix. Ctrl-C stops both services,
+  including background solver processes.
+* **Options:**
+  * `--demo` re-solves every 10 hands instead of 50 (for recordings);
+  * `--api-port` and `--web-port` change the ports;
+  * `--open` opens the browser;
+  * `--rebuild` forces a fresh web build.
+* **Logs:** `runs/launch/`.
+
+**Recording a demo:** see [docs/demo.md](docs/demo.md).
+**Release status:** see [docs/release/v1.md](docs/release/v1.md).
+
+## Documentation
+
+| for | read |
+|---|---|
+| a quick understanding | [docs/overview.md](docs/overview.md): the problem, CFR, opponent modelling, RNR, certification, results, limits |
+| a demo | [docs/demo.md](docs/demo.md): recording plan, narration, real screenshots |
+| the frozen research baseline | [docs/research/research_freeze.md](docs/research/research_freeze.md) and [configs/pokermind-research-v1.json](configs/pokermind-research-v1.json) |
+| the measured results | `docs/experiments/` (one file per milestone, with reproduction commands) |
+| the app | [docs/design/app_backend.md](docs/design/app_backend.md) (API contract), [web/README.md](web/README.md) |
+| concepts | [docs/concepts/cfr.md](docs/concepts/cfr.md), [docs/concepts/neural_policy.md](docs/concepts/neural_policy.md), [docs/games/leduc.md](docs/games/leduc.md) |
+
+## How it was built
+
+| milestone | what it added | where the evidence is |
+|---|---|---|
+| M0–M1 | Kuhn Poker engine; vanilla CFR with exact evaluation (exploitability 0.0010, game value matched to 4e-7) | `docs/concepts/cfr.md` |
+| M2A–M2B | tiny neural policies distilled from CFR; training stability | `docs/experiments/m2b_results.md` |
+| M3–M4 | generic game interface, Leduc, CFR hero (0.0030); neural generalisation (not adopted) | `docs/experiments/m4_leduc_neural.md` |
+| M5 | Bayesian opponent model from public actions | `docs/experiments/m5_opponent_modeling.md` |
+| M6 | adaptation within an exact exploitability budget | `docs/experiments/m6_adaptive_strategy.md` |
+| M7A–M7B | Restricted Nash Response; calibration; research freeze v1 | `docs/experiments/m7a_robust_response.md`, `m7b_adaptive_reliability.md` |
+| M8A–M8C | FastAPI backend, web app, learning dashboard | `docs/design/app_backend.md`, `web/README.md` |
+| M9 | one-command launcher, portfolio docs, release verification | `docs/release/v1.md` |
+
+## Technical reference
+
+### Layout
 
 ```
 src/pokermind/
@@ -51,6 +120,7 @@ src/pokermind/
   research.py            M7B: versioned research configuration and digest
   app/                   M8A: verified context, Leduc sessions, background certified
                          strategy updates, session store, FastAPI adapter (api.py)
+  launcher.py            M9: `pokermind launch` (checks, build, supervised start/stop)
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -76,7 +146,10 @@ docs/research/research_freeze.md  M7B frozen architecture, evidence, reproductio
 configs/pokermind-research-v1.json  frozen research configuration (digest-checked)
 docs/design/app_backend.md  M8A architecture, gameplay rules, update safety, API contract
 research/                experiment notebooks/scripts (kept apart from the package)
-web/                     M8B: Next.js web interface (client of the M8A API), see web/README.md
+web/                     M8B/M8C: Next.js web interface and dashboard, see web/README.md
+web/scripts/capture-screenshots.mjs  M9: real-session screenshots via headless Chrome
+docs/overview.md, docs/demo.md, docs/release/v1.md  M9: portfolio overview, demo, release
+docs/screenshots/        M9: screenshots from a real session
 ```
 
 Dependency direction: `games` ← `strategy` ← {`agents`, `learning`,
@@ -85,7 +158,7 @@ and its experiment import PyTorch, lazily from the CLI. Games know nothing about
 agents or learning. Agents only see `InfoState`. The evaluator never imports
 the learning code, so it is an independent check on CFR.
 
-## Setup (Apple Silicon, Python 3.12)
+### Development setup (Apple Silicon, Python 3.12)
 
 ```bash
 python3.12 -m venv .venv
@@ -93,7 +166,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## Usage
+### Research commands
 
 ```bash
 pokermind agents
@@ -130,11 +203,9 @@ pokermind reliability {convergence,calibrate,evaluate,benchmark} \
     --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
 pokermind research-config --check
 
-# M8A: play against the adaptive AI through a local API (pip install -e ".[app]")
-pokermind serve          # http://127.0.0.1:8000/docs
-
-# M8B: the web interface (in a second terminal; Node.js >= 20.9)
-cd web && npm install && npm run build && npm run start   # http://localhost:3000
+# M8A–M9: the app (pokermind launch runs both; or start them separately)
+pokermind serve          # API only, http://127.0.0.1:8000/docs
+cd web && npm ci && npm run build && npm run start   # web only, http://localhost:3000
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one
@@ -176,15 +247,16 @@ terminal history, elapsed time, and a SHA-256 digest of every hand record.
 The engine raises on any illegal transition, so a completed run has none. Use `--output` to write a JSON file that also records
 the full configuration and environment metadata.
 
-## Quality checks
+### Quality checks
 
 ```bash
-pytest
+pytest                                   # POKERMIND_E2E=1 adds a full launcher test
 ruff check . && ruff format --check .
 mypy
+(cd web && npm run typecheck && npm run lint && npm test && npm run build)
 ```
 
-## Engineering principles
+### Engineering principles
 
 * Environments, agents, learning algorithms and evaluation stay independent.
 * Agents never see an opponent's private cards.

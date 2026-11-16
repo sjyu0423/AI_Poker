@@ -236,6 +236,35 @@ def _build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--config", type=Path, default=Path("configs/pokermind-research-v1.json"))
     serve.add_argument("--hero", type=Path, help="CFR hero file (default: the config's path)")
     serve.add_argument("--update-workers", type=int, default=1, help="solver processes")
+    serve.add_argument(
+        "--recompute-every",
+        type=int,
+        help="default hands between strategy recomputations for new sessions (default 50)",
+    )
+
+    launch = sub.add_parser(
+        "launch", help="M9: check the setup, then start the backend and web app together"
+    )
+    launch.add_argument("--host", default="127.0.0.1", help="bind address (local only by default)")
+    launch.add_argument("--api-port", type=int, default=8000)
+    launch.add_argument("--web-port", type=int, default=3000)
+    launch.add_argument("--config", type=Path, default=Path("configs/pokermind-research-v1.json"))
+    launch.add_argument("--hero", type=Path, help="CFR hero file (default: the config's path)")
+    launch.add_argument(
+        "--recompute-every", type=int, help="hands between strategy updates (default 50)"
+    )
+    launch.add_argument(
+        "--demo",
+        action="store_true",
+        help="demo pacing: strategy updates every 10 hands (overrides --recompute-every)",
+    )
+    launch.add_argument("--rebuild", action="store_true", help="force a fresh web build")
+    launch.add_argument("--open", action="store_true", help="open the browser when ready")
+    launch.add_argument(
+        "--train-hero",
+        action="store_true",
+        help="one-time setup: train the frozen CFR hero (~30 min), then exit",
+    )
 
     sub.add_parser("agents", help="list registered agents")
     return parser
@@ -301,6 +330,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _research_config(args)
     if args.command == "serve":
         return _serve(args)
+    if args.command == "launch":
+        return _launch(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -796,10 +827,20 @@ def _serve(args: argparse.Namespace) -> int:
         return 2
     from pokermind.app.context import ContextError, load_app_context
     from pokermind.app.manager import SessionManager
+    from pokermind.app.session import SessionSettings
     from pokermind.app.updates import ProcessBackend
 
     if args.update_workers <= 0:
         print("error: --update-workers must be positive", file=sys.stderr)
+        return 2
+    try:
+        defaults = (
+            SessionSettings()
+            if args.recompute_every is None
+            else SessionSettings(recompute_every=args.recompute_every)
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
     try:
         ctx = load_app_context(args.config, args.hero)
@@ -807,13 +848,42 @@ def _serve(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     backend = ProcessBackend(args.config, args.hero, args.update_workers)
-    app = create_app(SessionManager(ctx, backend))
+    app = create_app(SessionManager(ctx, backend, defaults=defaults))
     print(
         f"PokerMind research {ctx.research.version} ({ctx.config_digest[:12]}), "
-        f"exploitability limit {ctx.budget:.4f}; http://{args.host}:{args.port}/docs"
+        f"exploitability limit {ctx.budget:.4f}, recompute every "
+        f"{defaults.recompute_every} hands; http://{args.host}:{args.port}/docs"
     )
     uvicorn.run(app, host=args.host, port=args.port)
     return 0
+
+
+DEMO_RECOMPUTE_EVERY = 10
+
+
+def _launch(args: argparse.Namespace) -> int:
+    from pokermind.launcher import LaunchConfig, LaunchError, launch, train_hero
+
+    root = Path.cwd()
+    if not (root / "pyproject.toml").exists() or not (root / "web").is_dir():
+        print("error: run `pokermind launch` from the repository root", file=sys.stderr)
+        return 2
+    cfg = LaunchConfig(
+        root=root,
+        host=args.host,
+        api_port=args.api_port,
+        web_port=args.web_port,
+        config=args.config,
+        hero=args.hero,
+        recompute_every=DEMO_RECOMPUTE_EVERY if args.demo else args.recompute_every,
+        rebuild=args.rebuild,
+        open_browser=args.open,
+    )
+    try:
+        return train_hero(cfg) if args.train_hero else launch(cfg)
+    except LaunchError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":  # pragma: no cover

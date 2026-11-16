@@ -108,6 +108,16 @@ function TendencyCard({ t }: { t: Tendency }) {
   );
 }
 
+/** First hand a version played, or a note that a newer version replaced it before any
+ * hand was dealt (both installed after the same hand). Derived from served values only. */
+export function inPlayFrom(v: StrategyVersion, all: StrategyVersion[]): string {
+  const replaced = all.some(
+    (w) => w.version > v.version && w.installed_after_hand === v.installed_after_hand,
+  );
+  if (replaced) return "replaced before use";
+  return String(v.version === 1 ? 1 : v.installed_after_hand + 1);
+}
+
 function ExploitabilityMeter({ v, baseline }: { v: StrategyVersion; baseline: number }) {
   const limit = v.exploitability_limit;
   const share = Math.min(1, v.certified_exploitability / limit);
@@ -205,7 +215,7 @@ function StrategyEvolution({
                 </td>
                 <td className="mono">{chips(v.certified_exploitability)}</td>
                 <td>{v.based_on_hands}</td>
-                <td>{v.version === 1 ? 1 : v.installed_after_hand + 1}</td>
+                <td>{inPlayFrom(v, strategy.versions)}</td>
               </tr>
             ))}
           </tbody>

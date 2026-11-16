@@ -31,6 +31,16 @@ npm test            # Vitest + Testing Library (jsdom, scripted fake backend)
 npm run build       # production build
 ```
 
+Usually you don't need these steps: `pokermind launch` (repository root)
+checks the setup, builds when needed, and runs both services.
+
+## Screenshots
+
+`node scripts/capture-screenshots.mjs` drives the installed Google Chrome
+(headless, real mouse and keyboard input) through a real session against a
+running app (`pokermind launch --demo`). It writes PNGs to
+`docs/screenshots/`. It needs Node.js ≥ 22 and has no npm dependencies.
+
 ## Structure
 
 ```

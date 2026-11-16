@@ -6,10 +6,13 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M7B, research freeze of the adaptive Leduc baseline**: a frozen,
+**Status: M8A, local game backend**: a FastAPI server (`pokermind serve`)
+to play heads-up Leduc against the frozen adaptive AI, with background,
+certified strategy updates; see `docs/design/app_backend.md` (M7B: research
+freeze of the adaptive Leduc baseline: a frozen,
 versioned configuration (`configs/pokermind-research-v1.json`) with a
 batched RNR solver, calibrated uncertainty-aware selection and held-out
-robustness results; see `docs/research/research_freeze.md` (M7A: robust
+robustness results, `docs/research/research_freeze.md`; M7A: robust
 exploitation with Restricted Nash Response and Data-Biased Response; M6: opponent-adaptive play with an exploitability
 budget; M5: Bayesian opponent modelling; M4: neural generalization; M3: Leduc and
 generalized CFR/evaluation; M2B: training stability; M2A: neural
@@ -43,6 +46,8 @@ src/pokermind/
                          M7B: batched RNR solver and evaluator (batch.py), budgeted
                          uncertainty-aware selection (selection.py)
   research.py            M7B: versioned research configuration and digest
+  app/                   M8A: verified context, Leduc sessions, background certified
+                         strategy updates, session store, FastAPI adapter (api.py)
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -66,6 +71,7 @@ docs/experiments/m7a_robust_response.md  M7A results
 docs/experiments/m7b_adaptive_reliability.md  M7B convergence, calibration, speed, robustness
 docs/research/research_freeze.md  M7B frozen architecture, evidence, reproduction
 configs/pokermind-research-v1.json  frozen research configuration (digest-checked)
+docs/design/app_backend.md  M8A architecture, gameplay rules, update safety, API contract
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -119,6 +125,9 @@ pokermind robust-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.j
 pokermind reliability {convergence,calibrate,evaluate,benchmark} \
     --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
 pokermind research-config --check
+
+# M8A: play against the adaptive AI through a local API (pip install -e ".[app]")
+pokermind serve          # http://127.0.0.1:8000/docs
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

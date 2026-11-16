@@ -228,6 +228,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     frz.add_argument("--check", action="store_true", help="validate --output and print it")
 
+    serve = sub.add_parser(
+        "serve", help="M8A: local API to play Leduc against the adaptive AI (needs [app])"
+    )
+    serve.add_argument("--host", default="127.0.0.1", help="bind address (local only by default)")
+    serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--config", type=Path, default=Path("configs/pokermind-research-v1.json"))
+    serve.add_argument("--hero", type=Path, help="CFR hero file (default: the config's path)")
+    serve.add_argument("--update-workers", type=int, default=1, help="solver processes")
+
     sub.add_parser("agents", help="list registered agents")
     return parser
 
@@ -290,6 +299,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _reliability(args)
     if args.command == "research-config":
         return _research_config(args)
+    if args.command == "serve":
+        return _serve(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -534,10 +545,6 @@ def _train_game_cfr(args: argparse.Namespace) -> int:
     return 0
 
 
-if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(main())
-
-
 def _leduc_neural(args: argparse.Namespace) -> int:
     from pokermind.experiments.leduc_neural_study import (
         LeducNeuralStudyConfig,
@@ -777,3 +784,37 @@ def _research_config(args: argparse.Namespace) -> int:
         return 2
     print(f"wrote {args.output} (digest {base.digest()})")
     return 0
+
+
+def _serve(args: argparse.Namespace) -> int:
+    try:
+        import uvicorn
+
+        from pokermind.app.api import create_app
+    except ImportError:
+        print("error: serving needs the app extra: pip install -e '.[app]'", file=sys.stderr)
+        return 2
+    from pokermind.app.context import ContextError, load_app_context
+    from pokermind.app.manager import SessionManager
+    from pokermind.app.updates import ProcessBackend
+
+    if args.update_workers <= 0:
+        print("error: --update-workers must be positive", file=sys.stderr)
+        return 2
+    try:
+        ctx = load_app_context(args.config, args.hero)
+    except ContextError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    backend = ProcessBackend(args.config, args.hero, args.update_workers)
+    app = create_app(SessionManager(ctx, backend))
+    print(
+        f"PokerMind research {ctx.research.version} ({ctx.config_digest[:12]}), "
+        f"exploitability limit {ctx.budget:.4f}; http://{args.host}:{args.port}/docs"
+    )
+    uvicorn.run(app, host=args.host, port=args.port)
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

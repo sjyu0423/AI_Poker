@@ -9,6 +9,7 @@ Examples::
     pokermind leduc-neural --teacher runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind adaptive-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+    pokermind robust-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
     pokermind simulate --agents cfr random --strategy runs/cfr/strategies/strategy_010000.json
 """
 
@@ -167,6 +168,23 @@ def _build_parser() -> argparse.ArgumentParser:
     adapt.add_argument("--workers", type=int, default=0, help="processes (0 = one per CPU)")
     adapt.add_argument("--output-dir", type=Path, default=Path("runs/m6-adaptive-strategy"))
 
+    robust = sub.add_parser(
+        "robust-study", help="M7A: RNR and DBR versus the M6 mixture at equal exploitability"
+    )
+    robust.add_argument("--hero", type=Path, required=True, help="hero's Leduc CFR strategy file")
+    robust.add_argument(
+        "--m6-metrics",
+        type=Path,
+        default=Path("runs/m6-adaptive-strategy/metrics.json"),
+        help="M6 results, to check that the M6 baselines reproduce",
+    )
+    robust.add_argument("--seeds", type=int, default=3)
+    robust.add_argument("--development-seeds", type=int, default=2)
+    robust.add_argument("--change-seeds", type=int, default=3)
+    robust.add_argument("--iterations", type=int, default=500, help="CFR+ iterations per solve")
+    robust.add_argument("--workers", type=int, default=0, help="processes (0 = one per CPU)")
+    robust.add_argument("--output-dir", type=Path, default=Path("runs/m7a-robust-response"))
+
     sub.add_parser("agents", help="list registered agents")
     return parser
 
@@ -223,6 +241,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _opponent_study(args)
     if args.command == "adaptive-study":
         return _adaptive_study(args)
+    if args.command == "robust-study":
+        return _robust_study(args)
 
     try:
         game = KuhnConfig(ante=args.ante, bet_size=args.bet_size)
@@ -584,6 +604,39 @@ def _adaptive_study(args: argparse.Namespace) -> int:
                 f"  {budget:>6}  {method:<18}{g['mean']:>+10.4f} [{g['ci_low']:+.4f}, "
                 f"{g['ci_high']:+.4f}]{row['max_exploitability']:>11.3f}"
             )
+    print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
+    print(f"results: {args.output_dir}")
+    return 0
+
+
+def _robust_study(args: argparse.Namespace) -> int:
+    from pokermind.experiments.robust_study import RobustStudyConfig, run_robust_study
+
+    try:
+        if not args.hero.is_file():
+            raise ValueError(f"hero strategy file not found: {args.hero}")
+        config = RobustStudyConfig(
+            hero_path=args.hero,
+            m6_metrics=args.m6_metrics,
+            seeds=args.seeds,
+            development_seeds=args.development_seeds,
+            change_seeds=args.change_seeds,
+            iterations=args.iterations,
+            workers=args.workers,
+        )
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    doc = run_robust_study(config, args.output_dir)
+    print(f"DBR threshold tuned on development opponents: {doc['dbr_tuning']['chosen']:g}")
+    print(f"M6 reproduction: {doc['m6_reproduction']}")
+    gain = doc["heldout"]["gain"]
+    print(
+        f"  held-out gain over CFR after 100 hands, by budget above CFR ({'/'.join(gain['mix'])}):"
+    )
+    for family in ("mix", "rnr", "dbr"):
+        cells = " ".join(f"{gain[family][d]['100']['mean']:+.4f}" for d in gain[family])
+        print(f"    {family:<5}{cells}")
     print(f"plot: {doc['plot'] or 'skipped (matplotlib not installed)'}")
     print(f"results: {args.output_dir}")
     return 0

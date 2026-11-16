@@ -6,8 +6,9 @@ observes and adjusts its strategy to them, while staying reasonably hard to
 exploit. Heads-up Texas Hold'em is the eventual target, but every algorithm is
 validated in small games first.
 
-**Status: M6, opponent-adaptive play with an exploitability budget** (M5:
-Bayesian opponent modelling; M4: neural generalization; M3: Leduc and
+**Status: M7A, robust exploitation with Restricted Nash Response and
+Data-Biased Response** (M6: opponent-adaptive play with an exploitability
+budget; M5: Bayesian opponent modelling; M4: neural generalization; M3: Leduc and
 generalized CFR/evaluation; M2B: training stability; M2A: neural
 distillation; M1: vanilla CFR with exact evaluation; M0: the Kuhn Poker
 engine).
@@ -34,6 +35,8 @@ src/pokermind/
                          exact public-context marginals, Dirichlet opponent model, CUSUM
   adaptive/              M6: card-conditional policy reconstruction (latent-card EM, Gibbs),
                          hero best responses, realization mixtures, exploitability budgets
+  robust/                M7A: compiled game tree, vectorized restricted CFR(+), Restricted
+                         Nash Response and Data-Biased Response, explicit RNR game
   experiments/           CFR and neural-distillation runners, metrics and plots
   simulation/runner.py   seeded batch runner, metrics, result digest
   simulation/metadata.py reproducibility metadata (versions, platform, git)
@@ -52,6 +55,8 @@ docs/design/opponent_modeling.md  M5 observability, contexts, model, evaluation,
 docs/experiments/m5_opponent_modeling.md  M5 results
 docs/design/adaptive_strategy.md  M6 reconstruction, mixtures, budget, protocol
 docs/experiments/m6_adaptive_strategy.md  M6 results
+docs/design/robust_response.md  M7A RNR/DBR, guarantees, approximations, selection
+docs/experiments/m7a_robust_response.md  M7A results
 research/                experiment notebooks/scripts (kept apart from the package)
 ```
 
@@ -96,6 +101,9 @@ pokermind opponent-study --hero runs/m4-leduc-teacher/strategies/strategy_100000
 
 # M6: adapt to observed opponents within an exact exploitability budget (multi-process)
 pokermind adaptive-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
+
+# M7A: RNR and DBR vs the M6 mixture at equal exact exploitability budgets (multi-process)
+pokermind robust-study --hero runs/m4-leduc-teacher/strategies/strategy_100000.json
 ```
 
 `train-cfr` writes `metrics.json`, `metrics.csv`, `convergence.png` and one

@@ -31,6 +31,7 @@ export const links = {
     "https://github.com/sjyu0423/AI_Poker/blob/main/README.md#quick-start-macos",
   cfrPage: "/research/cfr/",
   opponentModelingPage: "/research/opponent-modeling/",
+  robustResponsePage: "/research/robust-response/",
   cfr: "https://github.com/sjyu0423/AI_Poker/blob/main/docs/concepts/cfr.md",
   m4: "https://github.com/sjyu0423/AI_Poker/blob/main/docs/experiments/m4_leduc_neural.md",
   m5: "https://github.com/sjyu0423/AI_Poker/blob/main/docs/experiments/m5_opponent_modeling.md",
@@ -54,6 +55,10 @@ export const hero = {
   opponentCta: {
     label: "Opponent modeling exhibit",
     href: links.opponentModelingPage,
+  },
+  robustCta: {
+    label: "Restricted Nash Response exhibit",
+    href: links.robustResponsePage,
   },
   localNote:
     "This site is a research showcase. The playable app runs locally from the GitHub release—not in the browser here.",
@@ -300,6 +305,7 @@ export const navItems = [
   { label: "Research", href: "#research" },
   { label: "CFR", href: links.cfrPage },
   { label: "Learning", href: links.opponentModelingPage },
+  { label: "RNR", href: links.robustResponsePage },
   { label: "Preview", href: "#preview" },
   { label: "Technology", href: "#technology" },
 ] as const;

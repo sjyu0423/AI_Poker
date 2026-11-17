@@ -108,8 +108,8 @@ export const continueCopy = {
   headline:
     "Knowing how someone plays is one thing. How do you exploit those tendencies without becoming vulnerable yourself?",
   body:
-    "Restricted Nash Response and exact exploitability budgets are the next chapter. Until that interactive exhibit ships, return to the homepage for the measured RNR results—or revisit how CFR built the safe baseline.",
-  primary: { label: "Back to homepage", href: "/" },
+    "Restricted Nash Response turns opponent predictions into exploitability-constrained strategies. Continue to the interactive RNR exhibit—or revisit how CFR built the safe baseline.",
+  primary: { label: "Restricted Nash Response exhibit", href: links.robustResponsePage },
   secondary: { label: "CFR explainer", href: links.cfrPage },
   tertiary: { label: "M5 results note", href: links.m5 },
 } as const;

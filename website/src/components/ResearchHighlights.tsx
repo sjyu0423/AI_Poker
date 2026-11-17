@@ -72,6 +72,9 @@ export function ResearchHighlights() {
           <Button href={withBasePath(links.opponentModelingPage)} variant="secondary">
             Opponent modeling exhibit
           </Button>
+          <Button href={withBasePath(links.robustResponsePage)} variant="secondary">
+            Restricted Nash Response exhibit
+          </Button>
           <Button href={links.cfr} variant="ghost" external>
             Technical CFR note
           </Button>

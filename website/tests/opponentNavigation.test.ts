@@ -12,9 +12,9 @@ describe("opponent-modeling navigation", () => {
     );
   });
 
-  it("keeps in-page anchors and a homepage continuation", () => {
+  it("keeps in-page anchors and continues into the RNR exhibit", () => {
     expect(opponentNav.every((item) => item.href.startsWith("#"))).toBe(true);
-    expect(continueCopy.primary.href).toBe("/");
+    expect(continueCopy.primary.href).toBe("/research/robust-response/");
     expect(continueCopy.secondary.href).toBe("/research/cfr/");
   });
 

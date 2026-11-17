@@ -59,6 +59,7 @@ Screenshots are copies of `docs/screenshots/` in `public/screenshots/`.
 | `/` | W1 homepage showcase |
 | `/research/cfr/` | W2 interactive CFR explainer |
 | `/research/opponent-modeling/` | W3 Bayesian opponent-modeling exhibit |
+| `/research/robust-response/` | W4 Restricted Nash Response exhibit |
 
 Deep links must work under `/AI_Poker/` after static export (trailing slash).
 
@@ -68,13 +69,13 @@ Deep links must work under `/AI_Poker/` after static export (trailing slash).
 website/
   public/screenshots/     real app captures
   src/app/                App Router pages, global CSS
-  src/app/research/cfr/   CFR explainer route
-  src/components/         homepage + CFR exhibit sections
-  src/content/            metrics, links, M1 checkpoint data
-  src/lib/                path helpers + regret matching
+  src/app/research/       CFR / opponent / RNR exhibit routes
+  src/components/         homepage + research exhibit sections
+  src/content/            metrics, links, curated experiment data
+  src/lib/                path helpers + educational math
   tests/                  content, math, and navigation tests
 ```
 
 Out of scope until later milestones: GitHub Pages deployment workflow,
-opponent-modeling exhibit (W3), and any changes to the research freeze or
+documentation polish (W5), and any changes to the research freeze or
 `web/` app.

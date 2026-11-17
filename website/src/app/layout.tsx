@@ -5,6 +5,7 @@ import "./globals.css";
 import "./components.css";
 import "./cfr.css";
 import "./opponent.css";
+import "./robust.css";
 
 const display = Fraunces({
   subsets: ["latin"],

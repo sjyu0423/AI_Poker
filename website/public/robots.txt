@@ -1,0 +1,5 @@
+# PokerMind static research showcase (GitHub Pages project site)
+User-agent: *
+Allow: /
+
+Sitemap: https://sjyu0423.github.io/AI_Poker/sitemap.xml

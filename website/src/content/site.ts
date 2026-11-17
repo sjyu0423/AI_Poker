@@ -15,7 +15,19 @@ export const siteMeta = {
   researchDigestPrefix: "a67a2826",
   url: "https://sjyu0423.github.io/AI_Poker/",
   locale: "en_US",
+  /** Dedicated social card under the GitHub Pages base path. */
+  ogImage: "og-share.jpg",
+  ogImageAlt:
+    "PokerMind — Adaptive Leduc Poker AI Research, charcoal and emerald portfolio banner",
 } as const;
+
+/** Absolute public routes published by the static site (trailing slashes). */
+export const publishedRoutes = [
+  "/",
+  "/research/cfr/",
+  "/research/opponent-modeling/",
+  "/research/robust-response/",
+] as const;
 
 export const links = {
   github: "https://github.com/sjyu0423/AI_Poker",

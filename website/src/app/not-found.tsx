@@ -9,15 +9,30 @@ export default function NotFound() {
         <p className="section-kicker">404</p>
         <h1>Page not found</h1>
         <p>
-          This static showcase only publishes the {siteMeta.name} homepage. The
-          playable app and experiment tools live in the repository.
+          That URL is not part of the static {siteMeta.name} research showcase.
+          Try the homepage or one of the interactive exhibits—or open the
+          repository for the local playable app.
         </p>
         <div className="hero__actions">
           <Button href={withBasePath("/")}>Back to homepage</Button>
-          <Button href={links.github} variant="secondary" external>
+          <Button href={withBasePath(links.robustResponsePage)} variant="secondary">
+            Research exhibits
+          </Button>
+          <Button href={links.github} variant="ghost" external>
             View on GitHub
           </Button>
         </div>
+        <ul className="not-found__links">
+          <li>
+            <a href={withBasePath(links.cfrPage)}>CFR explainer</a>
+          </li>
+          <li>
+            <a href={withBasePath(links.opponentModelingPage)}>Opponent modeling</a>
+          </li>
+          <li>
+            <a href={withBasePath(links.robustResponsePage)}>Restricted Nash Response</a>
+          </li>
+        </ul>
       </div>
     </main>
   );

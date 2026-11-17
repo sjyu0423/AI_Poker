@@ -1,21 +1,8 @@
-import type { Metadata } from "next";
 import { CfrPage } from "@/components/cfr/CfrPage";
 import { cfrPageMeta } from "@/content/cfrPage";
-import { siteMeta } from "@/content/site";
+import { exhibitMetadata } from "@/lib/pageMetadata";
 
-export const metadata: Metadata = {
-  title: cfrPageMeta.title,
-  description: cfrPageMeta.description,
-  alternates: {
-    canonical: cfrPageMeta.path,
-  },
-  openGraph: {
-    title: `${cfrPageMeta.title} · ${siteMeta.name}`,
-    description: cfrPageMeta.description,
-    url: cfrPageMeta.path,
-    type: "article",
-  },
-};
+export const metadata = exhibitMetadata(cfrPageMeta);
 
 export default function Page() {
   return <CfrPage />;

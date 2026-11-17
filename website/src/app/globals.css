@@ -27,6 +27,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   font-family: var(--pm-font-body);
   font-size: var(--pm-fs-body);
   line-height: var(--pm-lh-body);
@@ -60,9 +61,15 @@ a:hover {
 
 a:focus-visible,
 button:focus-visible,
-summary:focus-visible {
+summary:focus-visible,
+input:focus-visible {
   outline: 2px solid var(--pm-champagne);
   outline-offset: 3px;
+}
+
+input[type="range"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline-offset: 4px;
 }
 
 img {

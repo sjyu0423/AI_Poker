@@ -73,5 +73,7 @@ describe("portfolio content source of truth", () => {
     expect(links.github).toBe("https://github.com/sjyu0423/AI_Poker");
     expect(links.release).toContain("/releases/tag/v1.0.0");
     expect(siteMeta.version).toBe("1.0.0");
+    expect(siteMeta.url).toBe("https://sjyu0423.github.io/AI_Poker/");
+    expect(siteMeta.ogImage).toBe("og-share.jpg");
   });
 });

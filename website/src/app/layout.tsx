@@ -53,10 +53,10 @@ export const metadata: Metadata = {
     locale: siteMeta.locale,
     images: [
       {
-        url: "screenshots/07-dashboard-strategy.png",
-        width: 1440,
-        height: 1000,
-        alt: "PokerMind learning dashboard showing certified strategy versions",
+        url: siteMeta.ogImage,
+        width: 1280,
+        height: 720,
+        alt: siteMeta.ogImageAlt,
       },
     ],
   },
@@ -64,11 +64,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${siteMeta.name} — ${siteMeta.tagline}`,
     description: siteMeta.description,
-    images: ["screenshots/07-dashboard-strategy.png"],
+    images: [siteMeta.ogImage],
   },
   robots: {
     index: true,
     follow: true,
+  },
+  alternates: {
+    canonical: "/",
   },
 };
 

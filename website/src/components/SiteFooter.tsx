@@ -1,4 +1,5 @@
 import { links, siteMeta, limitations } from "@/content/site";
+import { withBasePath } from "@/lib/paths";
 
 export function SiteFooter() {
   return (
@@ -8,11 +9,29 @@ export function SiteFooter() {
           <p className="site-footer__brand">{siteMeta.name}</p>
           <p className="muted">
             Research showcase for v{siteMeta.version}. Local-first Leduc Hold&apos;em AI
-            with exact exploitability budgets.
+            with exact exploitability budgets. The playable app runs locally from the
+            GitHub release—not in the browser here.
           </p>
         </div>
         <div>
-          <p className="site-footer__heading">Links</p>
+          <p className="site-footer__heading">Exhibits</p>
+          <ul className="site-footer__links">
+            <li>
+              <a href={withBasePath("/")}>Homepage</a>
+            </li>
+            <li>
+              <a href={withBasePath(links.cfrPage)}>CFR explainer</a>
+            </li>
+            <li>
+              <a href={withBasePath(links.opponentModelingPage)}>Opponent modeling</a>
+            </li>
+            <li>
+              <a href={withBasePath(links.robustResponsePage)}>Restricted Nash Response</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p className="site-footer__heading">Documentation</p>
           <ul className="site-footer__links">
             <li>
               <a href={links.github} target="_blank" rel="noopener noreferrer">

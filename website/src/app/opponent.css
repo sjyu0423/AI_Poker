@@ -1,0 +1,188 @@
+/* Opponent-modeling exhibit */
+
+.bayes-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.bayes-field {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--pm-ink-muted);
+  font-size: var(--pm-fs-small);
+}
+
+.bayes-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--pm-emerald-bright);
+}
+
+.bayes-metrics {
+  margin-top: 1.25rem;
+}
+
+.bayes-track {
+  position: relative;
+  height: 0.7rem;
+  margin: 1.1rem 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(214, 198, 160, 0.12);
+  overflow: hidden;
+}
+
+.bayes-track__interval {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(47, 154, 124, 0.35);
+  border-radius: inherit;
+  transition:
+    left var(--pm-dur) var(--pm-ease),
+    width var(--pm-dur) var(--pm-ease);
+}
+
+.bayes-track__mean,
+.bayes-track__prior {
+  position: absolute;
+  top: -0.15rem;
+  bottom: -0.15rem;
+  width: 2px;
+  transform: translateX(-1px);
+  transition: left var(--pm-dur) var(--pm-ease);
+}
+
+.bayes-track__mean {
+  background: var(--pm-champagne-bright);
+}
+
+.bayes-track__prior {
+  background: var(--pm-ink-faint);
+  opacity: 0.85;
+}
+
+.bayes-track__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: var(--pm-fs-small);
+  margin-bottom: 1rem;
+}
+
+.bayes-uncertainty {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--pm-border);
+}
+
+.bayes-uncertainty h3 {
+  margin-bottom: 0.55rem;
+}
+
+.hidden-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.hidden-card {
+  padding: 1rem;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-lg);
+  background: var(--pm-bg-panel);
+}
+
+.hidden-card ul {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+
+.hidden-card li + li {
+  margin-top: 0.65rem;
+}
+
+.m5-chart {
+  margin: 1rem 0 1.4rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.m5-chart__row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 4rem;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.m5-chart__hands,
+.m5-chart__value {
+  color: var(--pm-champagne-bright);
+  font-size: 0.9rem;
+}
+
+.m5-chart__bar-track {
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgba(214, 198, 160, 0.12);
+  overflow: hidden;
+}
+
+.m5-chart__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pm-emerald-bright), var(--pm-champagne));
+}
+
+.m5-chart__axis {
+  margin: 0.35rem 0 0;
+  font-size: var(--pm-fs-small);
+}
+
+.change-table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-lg);
+}
+
+.change-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 28rem;
+  font-size: 0.95rem;
+}
+
+.change-table th,
+.change-table td {
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--pm-border);
+}
+
+.change-table th {
+  color: var(--pm-ink);
+  background: rgba(24, 28, 35, 0.9);
+  font-weight: 600;
+}
+
+.change-table td {
+  color: var(--pm-ink-muted);
+}
+
+.change-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .bayes-controls,
+  .hidden-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .m5-chart__row {
+    grid-template-columns: 2.75rem 1fr 3.5rem;
+  }
+}

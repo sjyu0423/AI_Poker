@@ -167,7 +167,8 @@ export const verificationCopy = {
 export const continueCopy = {
   headline: "CFR taught PokerMind how to play robustly. But could it learn how a particular opponent plays?",
   body:
-    "Opponent modeling and safe adaptation come next in the research story. Until that interactive exhibit ships, return to the homepage for the measured Bayesian and RNR results.",
-  primary: { label: "Back to homepage", href: "/" },
-  secondary: { label: "Read the CFR note", href: links.cfr },
+    "The next exhibit shows how PokerMind updates Bayesian beliefs from public betting actions—and why hidden cards still bound what can be learned.",
+  primary: { label: "Opponent modeling exhibit", href: links.opponentModelingPage },
+  secondary: { label: "Back to homepage", href: "/" },
+  tertiary: { label: "Read the CFR note", href: links.cfr },
 } as const;

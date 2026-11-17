@@ -69,7 +69,10 @@ export function ResearchHighlights() {
 
         <div className="hero__actions" style={{ marginTop: "1.5rem" }}>
           <Button href={withBasePath(links.cfrPage)}>Open the interactive CFR explainer</Button>
-          <Button href={links.cfr} variant="secondary" external>
+          <Button href={withBasePath(links.opponentModelingPage)} variant="secondary">
+            Opponent modeling exhibit
+          </Button>
+          <Button href={links.cfr} variant="ghost" external>
             Technical CFR note
           </Button>
         </div>

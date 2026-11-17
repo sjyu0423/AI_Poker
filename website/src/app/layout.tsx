@@ -4,6 +4,7 @@ import { siteMeta } from "@/content/site";
 import "./globals.css";
 import "./components.css";
 import "./cfr.css";
+import "./opponent.css";
 
 const display = Fraunces({
   subsets: ["latin"],

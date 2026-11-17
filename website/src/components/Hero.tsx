@@ -17,6 +17,9 @@ export function Hero() {
             <Button href={withBasePath(hero.cfrCta.href)} variant="secondary">
               {hero.cfrCta.label}
             </Button>
+            <Button href={withBasePath(hero.opponentCta.href)} variant="secondary">
+              {hero.opponentCta.label}
+            </Button>
             <Button href={hero.secondaryCta.href} variant="ghost" external>
               {hero.secondaryCta.label}
             </Button>

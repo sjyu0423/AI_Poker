@@ -148,8 +148,11 @@ export function CfrPage() {
               <Button href={withBasePath(continueCopy.primary.href)}>
                 {continueCopy.primary.label}
               </Button>
-              <Button href={continueCopy.secondary.href} variant="secondary" external>
+              <Button href={withBasePath(continueCopy.secondary.href)} variant="secondary">
                 {continueCopy.secondary.label}
+              </Button>
+              <Button href={continueCopy.tertiary.href} variant="ghost" external>
+                {continueCopy.tertiary.label}
               </Button>
             </div>
           </div>

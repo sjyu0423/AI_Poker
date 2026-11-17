@@ -53,6 +53,7 @@ describe("portfolio content source of truth", () => {
       "#how-it-works",
       "#research",
       "/research/cfr/",
+      "/research/opponent-modeling/",
       "#preview",
       "#technology",
     ]);

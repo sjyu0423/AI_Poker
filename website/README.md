@@ -58,6 +58,7 @@ Screenshots are copies of `docs/screenshots/` in `public/screenshots/`.
 |---|---|
 | `/` | W1 homepage showcase |
 | `/research/cfr/` | W2 interactive CFR explainer |
+| `/research/opponent-modeling/` | W3 Bayesian opponent-modeling exhibit |
 
 Deep links must work under `/AI_Poker/` after static export (trailing slash).
 
